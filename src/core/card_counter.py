@@ -95,6 +95,10 @@ class WongHalvesCounter:
         cards_remaining = self.total_cards - self.cards_seen
         return round(cards_remaining / 52.0, 2)
 
+    def get_cards_remaining(self) -> int:
+        """取得剩餘牌張數"""
+        return self.total_cards - self.cards_seen
+
     def get_betting_suggestion(self) -> Tuple[str, str]:
         """根據真實計數取得下注建議"""
         true_count = self.get_true_count()
