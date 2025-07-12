@@ -74,6 +74,12 @@ class WongHalvesCounter:
         if card in self.card_values:
             self.running_count += self.card_values[card]
             self.cards_seen += 1
+    
+    def remove_card(self, card: str) -> None:
+        """從計數中移除一張牌"""
+        if card in self.card_values:
+            self.running_count -= self.card_values[card]
+            self.cards_seen = max(0, self.cards_seen - 1)
 
     def get_true_count(self) -> float:
         """計算真實計數（流水計數 ÷ 剩餘牌組數）"""

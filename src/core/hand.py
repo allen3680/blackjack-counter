@@ -100,32 +100,39 @@ class Hand:
         """停牌"""
         if self.status == HandStatus.ACTIVE:
             self.status = HandStatus.STANDING
+    
+    def remove_last_card(self) -> Optional[str]:
+        """
+        移除最後一張牌
+        
+        Returns:
+            被移除的牌，如果沒有牌則返回 None
+        """
+        if not self.cards:
+            return None
+        
+        removed_card = self.cards.pop()
+        
+        # 重新計算狀態
+        if self.cards:
+            value, _ = self.calculate_value()
+            # 如果之前是爆牌或21點，可能需要恢復為活動狀態
+            if self.status in [HandStatus.BUSTED, HandStatus.BLACKJACK]:
+                if value <= 21:
+                    self.status = HandStatus.ACTIVE
+        else:
+            # 如果沒有牌了，重置為活動狀態
+            self.status = HandStatus.ACTIVE
+        
+        return removed_card
 
     def get_display_string(self) -> str:
         """取得格式化的手牌顯示字串"""
         if not self.cards:
             return "無手牌"
 
-        value, is_soft = self.calculate_value()
         cards_str = ", ".join(self.cards)
-
-        # 顯示點數和軟/硬牌狀態
-        if is_soft and value != 21:
-            value_str = f"軟{value}"
-        else:
-            value_str = str(value)
-
-        # 加上狀態標記
-        status_markers = {
-            HandStatus.BUSTED: " (爆牌)",
-            HandStatus.BLACKJACK: " (21點!)",
-            HandStatus.DOUBLED: " (已加倍)",
-            HandStatus.STANDING: " (停牌)",
-        }
-
-        status_mark = status_markers.get(self.status, "")
-
-        return f"{cards_str} [{value_str}]{status_mark}"
+        return cards_str
 
     def is_complete(self) -> bool:
         """檢查手牌是否已完成（不需要更多決策）"""

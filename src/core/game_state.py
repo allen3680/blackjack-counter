@@ -92,6 +92,9 @@ class GameState:
 
         # 插入新手牌到當前手牌後面
         self.player_hands.insert(self.current_hand_index + 1, new_hand)
+        
+        # 確保索引仍然有效
+        self.validate_current_hand_index()
 
         return True
 
@@ -136,3 +139,48 @@ class GameState:
     def double_down_current_hand(self) -> None:
         """當前手牌加倍"""
         self.current_hand.double_down()
+
+    def set_current_hand_index(self, index: int) -> bool:
+        """
+        手動設定當前手牌索引
+        
+        Args:
+            index: 要設定的手牌索引
+            
+        Returns:
+            是否成功設定
+        """
+        if 0 <= index < len(self.player_hands):
+            self.current_hand_index = index
+            return True
+        return False
+
+    def validate_current_hand_index(self) -> None:
+        """確保當前手牌索引在有效範圍內"""
+        if self.current_hand_index >= len(self.player_hands):
+            self.current_hand_index = 0
+        elif self.current_hand_index < 0:
+            self.current_hand_index = 0
+    
+    def remove_last_card_from_current_hand(self) -> Optional[str]:
+        """
+        從當前手牌移除最後一張牌
+        
+        Returns:
+            被移除的牌，如果沒有牌則返回 None
+        """
+        return self.current_hand.remove_last_card()
+
+    def get_hand_by_index(self, index: int) -> Optional[Hand]:
+        """
+        根據索引取得特定手牌
+        
+        Args:
+            index: 手牌索引
+            
+        Returns:
+            指定的手牌，如果索引無效則返回 None
+        """
+        if 0 <= index < len(self.player_hands):
+            return self.player_hands[index]
+        return None
