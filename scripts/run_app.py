@@ -6,11 +6,11 @@ Entry point script for Blackjack Counter application.
 import sys
 from pathlib import Path
 
-# Add src directory to Python path
-src_path = Path(__file__).parent.parent / "src"
-sys.path.insert(0, str(src_path))
+# Add project root to Python path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
-from blackjack_counter.gui.app import main
+from src.gui.app_modern_qt import main
 
 if __name__ == "__main__":
     main()

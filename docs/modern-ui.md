@@ -1,38 +1,38 @@
-# 現代化 GUI 美化版本
+# 現代化 GUI 介面
 
 ## 概述
 
-新的現代化版本使用 ttkbootstrap 框架實現了美觀的深色主題界面，提供了更好的視覺體驗和互動性。由於 CustomTkinter 在 Linux 上存在兼容性問題，我們改用 ttkbootstrap 作為替代方案。
+本應用程式使用 PyQt6 框架實現了美觀的深色主題界面，提供了專業的視覺體驗和流暢的互動性。PyQt6 是跨平台的成熟 GUI 框架，在 Linux、Windows 和 macOS 上都有優異的表現。
 
 ## 主要特色
 
-### 1. 現代化深色主題
-- 使用 ttkbootstrap 的 "darkly" 主題
-- Bootstrap 風格的按鈕和元件
-- 專業的配色方案提升視覺層次
+### 1. PyQt6 深色主題
+- 使用 Fusion 樣式搭配自訂深色配色
+- 專業的賭場風格設計（深灰背景 #1e1e1e）
+- 圓角卡片和漸變效果
 
 ### 2. 視覺化元件
-- **Meter 元件**：圓形儀表盤顯示真實計數
-- **進度條**：顯示玩家優勢的動態進度條
-- **Tab 分頁**：使用 Notebook 組織牌輸入區域
-- **彩色按鈕**：不同類型的牌使用不同顏色
+- **QLCDNumber**：數位顯示器風格的真實計數
+- **動畫進度條**：平滑過渡的優勢指示器
+- **QTabWidget**：分頁式牌輸入區域
+- **彩色按鈕**：特殊牌使用不同顏色強調
 
 ### 3. 視覺增強
-- 使用 LabelFrame 創建分組區域
-- Bootstrap 風格的按鈕（success, info, warning, danger）
-- 不同狀態的視覺區分（活動手牌高亮）
-- 反色標籤突出重要信息
+- QGroupBox 創建卡片式分組
+- 自訂 QSS 樣式表實現精美外觀
+- 活動手牌的橙色邊框高亮
+- 顏色編碼系統（綠色=玩家優勢，紅色=莊家優勢）
 
-### 4. 優勢指示器
-- 動態進度條顯示真實計數
-- 根據計數自動變換顏色和樣式
-- 條紋進度條增加視覺效果
+### 4. 動畫效果
+- AnimatedProgressBar：使用 QPropertyAnimation 實現平滑過渡
+- 緩動曲線（OutCubic）提供自然的動畫效果
+- 500ms 動畫時長確保視覺舒適
 
 ### 5. 改進的佈局
+- QSplitter 分割遊戲區域
+- QScrollArea 實現可滾動的手牌顯示
 - 響應式設計，支持窗口縮放
-- 使用網格和框架組織佈局
-- 清晰的功能分區
-- Canvas 實現的可滾動手牌區域
+- 清晰的三層結構（計數、遊戲、控制）
 
 ### 6. 快捷鍵支持
 - S / s：停牌
@@ -47,19 +47,19 @@ make run-modern
 
 ### 方法 2：直接運行
 ```bash
-python3 -m src.gui.app_modern_ttk
+python3 -m src.gui.app_modern_qt
 ```
 
 ### 方法 3：使用腳本
 ```bash
-python3 scripts/run_modern_ttk.py
+python3 scripts/run_modern_qt.py
 ```
 
 ## 安裝依賴
 
 確保已安裝必要的依賴：
 ```bash
-pip install ttkbootstrap
+pip install PyQt6
 ```
 
 或使用完整安裝：
@@ -71,19 +71,21 @@ make install
 
 | 特性 | 原版本 | 現代化版本 |
 |------|--------|------------|
-| UI 框架 | Tkinter + ttk | ttkbootstrap |
-| 主題 | 系統默認 | Darkly 深色主題 |
-| 視覺元件 | 基本元件 | Meter、進度條、Tab |
-| 顏色方案 | 基本顏色 | Bootstrap 配色系統 |
-| 視覺反饋 | 最小 | 豐富的樣式變化 |
-| 按鈕樣式 | 標準按鈕 | Bootstrap 風格按鈕 |
+| UI 框架 | Tkinter + ttk | PyQt6 |
+| 主題 | 系統默認 | Fusion + 自訂深色主題 |
+| 視覺元件 | 基本元件 | QLCDNumber、動畫進度條、Tab |
+| 顏色方案 | 基本顏色 | 精心設計的配色系統 |
+| 視覺反饋 | 最小 | 豐富的動畫和過渡效果 |
+| 按鈕樣式 | 標準按鈕 | QSS 自訂樣式按鈕 |
+| 性能 | 一般 | 優秀（原生 C++ 後端）|
 
 ## 技術細節
 
-- 使用 ttkbootstrap 1.10.0+ 版本
+- 使用 PyQt6 6.4.0+ 版本
 - 支持 Python 3.7+
-- 基於標準 tkinter，兼容性更好
-- 使用 Bootstrap 風格系統
+- 跨平台兼容性優秀
+- 使用 QSS（Qt Style Sheets）自訂樣式
+- 支持硬體加速渲染
 
 ## 未來改進方向
 

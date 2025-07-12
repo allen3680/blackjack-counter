@@ -25,7 +25,7 @@ classifiers = [
 
 dependencies = [
     "pyyaml>=6.0",
-    "ttkbootstrap>=1.10.0",
+    "PyQt6>=6.4.0",
 ]
 
 [project.optional-dependencies]
@@ -49,7 +49,7 @@ where = ["src"]
 "" = "src"
 
 [project.scripts]
-blackjack-counter = "gui.app:main"
+blackjack-counter = "gui.app_modern_qt:main"
 
 [tool.black]
 line-length = 100

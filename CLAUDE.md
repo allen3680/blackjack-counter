@@ -4,18 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Blackjack card counting desktop application using the Wong Halves system and basic strategy for 8-deck games. It's built with Python and Tkinter for the GUI.
+This is a Blackjack card counting desktop application using the Wong Halves system and basic strategy for 8-deck games. It's built with Python and PyQt6 for a modern GUI with dark theme and animations.
 
 ## Development Commands
 
 ### Running the Application
 ```bash
-# Direct run
-python3 main.py
+# Using make
+make run
 
 # Or after installation
 pip install -e .
 blackjack-counter
+
+# Or direct run
+python3 scripts/run_app.py
 ```
 
 ### Code Quality Tools
@@ -49,7 +52,7 @@ The application follows a simple MVC pattern:
   - `basic_strategy.py`: Decision engine for optimal play
 
 - **View/Controller**:
-  - `main.py`: Tkinter GUI application (`BlackjackCounterApp` class)
+  - `app_modern_qt.py`: PyQt6 GUI application (`ModernBlackjackCounterApp` class)
 
 - **Configuration**:
   - `strategy.yaml`: Basic strategy tables for 8-deck games
@@ -86,7 +89,8 @@ The codebase uses type hints. Maintain type annotations for all new code and ens
 
 ### Code Style
 - Black formatter with 100-character line length
-- Follow existing patterns for Tkinter widget organization
+- Follow existing patterns for PyQt6 widget organization
+- Use QSS (Qt Style Sheets) for styling
 - YAML files use lowercase with underscores
 
 ### Adding Features

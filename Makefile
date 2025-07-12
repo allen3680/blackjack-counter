@@ -43,14 +43,9 @@ dev-install: ## Install only development dependencies
 	@echo "$(GREEN)✓ Development dependencies installed$(NC)"
 
 .PHONY: run
-run: ## Run the blackjack counter application
-	@echo "$(BLUE)Starting Blackjack Counter...$(NC)"
-	$(PYTHON) -m src.gui.app
-
-.PHONY: run-modern
-run-modern: ## Run the modern UI version of blackjack counter (ttkbootstrap)
-	@echo "$(BLUE)Starting Blackjack Counter (Modern UI - ttkbootstrap)...$(NC)"
-	$(PYTHON) -m src.gui.app_modern_ttk
+run: ## Run the blackjack counter application (PyQt6)
+	@echo "$(BLUE)Starting Blackjack Counter (PyQt6)...$(NC)"
+	$(PYTHON) -m src.gui.app_modern_qt
 
 .PHONY: format
 format: ## Format code with Black
