@@ -23,6 +23,9 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QSizePolicy,
     QTextEdit,
+    QDialog,
+    QDialogButtonBox,
+    QGraphicsOpacityEffect,
 )
 from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, pyqtSignal, QRect
 from PyQt6.QtGui import QFont, QPalette, QColor, QLinearGradient, QCursor, QMouseEvent
@@ -191,6 +194,131 @@ class HandFrame(QGroupBox):
             """
             )
         super().leaveEvent(event)
+
+
+class NewShoeDialog(QDialog):
+    """自定義新牌靴確認對話框"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("新牌靴確認")
+        self.setModal(True)
+        self.setFixedSize(420, 220)
+        
+        # 設定深色主題樣式
+        self.setStyleSheet("""
+            QDialog {
+                background-color: #1e1e1e;
+                border: 2px solid #444;
+                border-radius: 15px;
+            }
+        """)
+        
+        # 移除標題欄
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
+        
+        # 主佈局
+        layout = QVBoxLayout()
+        layout.setSpacing(20)
+        layout.setContentsMargins(30, 25, 30, 20)
+        
+        # 標題
+        title_label = QLabel("開始新牌靴？")
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title_label.setStyleSheet("""
+            QLabel {
+                color: #f39c12;
+                font-size: 20px;
+                font-weight: bold;
+            }
+        """)
+        layout.addWidget(title_label)
+        
+        # 警告文字
+        warning_label = QLabel("這將重置所有計數並清除手牌")
+        warning_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        warning_label.setStyleSheet("""
+            QLabel {
+                color: #e74c3c;
+                font-size: 14px;
+                padding: 10px;
+            }
+        """)
+        layout.addWidget(warning_label)
+        
+        # 按鈕區域
+        button_layout = QHBoxLayout()
+        button_layout.setSpacing(15)
+        
+        # 取消按鈕
+        cancel_button = QPushButton("取消")
+        cancel_button.setFixedSize(120, 40)
+        cancel_button.setStyleSheet("""
+            QPushButton {
+                background-color: #3a3a3a;
+                color: white;
+                border: 2px solid #555;
+                border-radius: 8px;
+                font-size: 15px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #4a4a4a;
+                border-color: #666;
+            }
+            QPushButton:pressed {
+                background-color: #2a2a2a;
+            }
+        """)
+        cancel_button.clicked.connect(self.reject)
+        button_layout.addWidget(cancel_button)
+        
+        # 確認按鈕
+        confirm_button = QPushButton("開始新牌靴")
+        confirm_button.setFixedSize(120, 40)
+        confirm_button.setStyleSheet("""
+            QPushButton {
+                background-color: #f39c12;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 15px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #f1c40f;
+            }
+            QPushButton:pressed {
+                background-color: #d68910;
+            }
+        """)
+        confirm_button.clicked.connect(self.accept)
+        button_layout.addWidget(confirm_button)
+        
+        layout.addLayout(button_layout)
+        self.setLayout(layout)
+        
+        # 淡入動畫
+        self.opacity_effect = QGraphicsOpacityEffect()
+        self.setGraphicsEffect(self.opacity_effect)
+        
+        self.fade_in_animation = QPropertyAnimation(self.opacity_effect, b"opacity")
+        self.fade_in_animation.setDuration(200)
+        self.fade_in_animation.setStartValue(0.0)
+        self.fade_in_animation.setEndValue(1.0)
+        self.fade_in_animation.setEasingCurve(QEasingCurve.Type.InOutQuad)
+        
+    def showEvent(self, event):
+        """顯示時播放淡入動畫"""
+        super().showEvent(event)
+        self.fade_in_animation.start()
+        
+        # 將對話框置中於父視窗
+        if self.parent():
+            parent_rect = self.parent().geometry()
+            x = parent_rect.center().x() - self.width() // 2
+            y = parent_rect.center().y() - self.height() // 2
+            self.move(x, y)
 
 
 class ModernBlackjackCounterApp(QMainWindow):
@@ -1036,13 +1164,10 @@ class ModernBlackjackCounterApp(QMainWindow):
 
     def new_shoe(self):
         """開始新牌靴"""
-        reply = QMessageBox.question(
-            self,
-            "新牌靴",
-            "開始新牌靴？這將重置所有計數。",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-        )
-        if reply == QMessageBox.StandardButton.Yes:
+        # 顯示自定義對話框
+        dialog = NewShoeDialog(self)
+        
+        if dialog.exec() == QDialog.DialogCode.Accepted:
             self.counter.new_shoe()
             self.game_state.clear_hand()
             self.other_player_cards.clear()
