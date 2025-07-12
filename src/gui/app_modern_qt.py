@@ -28,7 +28,7 @@ from PyQt6.QtWidgets import (
     QGraphicsOpacityEffect,
 )
 from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, pyqtSignal, QRect
-from PyQt6.QtGui import QFont, QPalette, QColor, QLinearGradient, QCursor, QMouseEvent
+from PyQt6.QtGui import QFont, QPalette, QColor, QLinearGradient, QCursor, QMouseEvent, QPixmap, QPainter, QIcon
 
 from src.core import BasicStrategy, GameState, WongHalvesCounter, HandStatus
 from src.config import SHORTCUTS_CONFIG
@@ -324,9 +324,12 @@ class NewShoeDialog(QDialog):
 class ModernBlackjackCounterApp(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("21點計牌器 Pro - Wong Halves 系統")
+        self.setWindowTitle("BlackJack Counter Pro")
         self.setGeometry(100, 100, 800, 650)
         self.setMinimumHeight(650)
+        
+        # 設定應用程式圖標
+        self.setWindowIcon(self.create_blackjack_icon())
 
         # 初始化元件
         self.counter = WongHalvesCounter(num_decks=8)
@@ -409,6 +412,50 @@ class ModernBlackjackCounterApp(QMainWindow):
         self.setup_ui()
         self.update_display()
         self.update_panel_selection()
+
+    def create_blackjack_icon(self) -> QIcon:
+        """生成BlackJack應用圖標"""
+        # 創建 64x64 的圖標
+        pixmap = QPixmap(64, 64)
+        pixmap.fill(Qt.GlobalColor.transparent)
+        
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
+        # 繪製背景圓圈
+        painter.setBrush(QColor("#2c3e50"))
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.drawEllipse(4, 4, 56, 56)
+        
+        # 繪製撲克牌符號 - 黑桃
+        painter.setBrush(QColor("#ecf0f1"))
+        # 黑桃形狀
+        spade_path = [
+            (32, 15),  # 頂點
+            (22, 30),  # 左邊
+            (26, 35),  # 左下
+            (32, 30),  # 中心
+            (38, 35),  # 右下
+            (42, 30),  # 右邊
+            (32, 15),  # 回到頂點
+        ]
+        
+        for i in range(len(spade_path) - 1):
+            painter.drawLine(spade_path[i][0], spade_path[i][1], 
+                           spade_path[i+1][0], spade_path[i+1][1])
+        
+        # 繪製黑桃底部
+        painter.drawLine(28, 35, 32, 45)  # 左側到中心
+        painter.drawLine(36, 35, 32, 45)  # 右側到中心
+        
+        # 繪製 "21" 文字
+        painter.setFont(QFont("Arial", 16, QFont.Weight.Bold))
+        painter.setPen(QColor("#e74c3c"))
+        painter.drawText(20, 50, "21")
+        
+        painter.end()
+        
+        return QIcon(pixmap)
 
     def setup_ui(self):
         """設定使用者介面"""
