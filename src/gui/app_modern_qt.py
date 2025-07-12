@@ -31,6 +31,24 @@ from src.core import BasicStrategy, GameState, WongHalvesCounter, HandStatus
 from src.config import SHORTCUTS_CONFIG
 
 
+class ClickableGroupBox(QGroupBox):
+    """可點擊的群組框"""
+    
+    # 定義點擊信號
+    clicked = pyqtSignal()
+    
+    def __init__(self, title: str, parent=None):
+        super().__init__(title, parent)
+        # 設定游標樣式（可點擊）
+        self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+    
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        """處理滑鼠點擊事件"""
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.clicked.emit()
+        super().mousePressEvent(event)
+
+
 class HandFrame(QGroupBox):
     """手牌顯示框架"""
 
@@ -194,6 +212,15 @@ class ModernBlackjackCounterApp(QMainWindow):
         self.hand_frames: List[HandFrame] = []
         self.last_card_action: str = "player"  # 追蹤最後的牌操作: "player" 或 "dealer"
         self.other_player_cards: List[str] = []  # 追蹤其他玩家的牌
+        
+        # 控制面板群組參考
+        self.player_group: Optional[ClickableGroupBox] = None
+        self.dealer_group: Optional[ClickableGroupBox] = None
+        self.others_group: Optional[ClickableGroupBox] = None
+        
+        # 面板切換追蹤
+        self.panel_order = ["player", "dealer", "other"]
+        self.current_panel_index = 0  # 從玩家手牌開始
 
         # 設定深色主題
         self.setStyleSheet(
@@ -253,6 +280,7 @@ class ModernBlackjackCounterApp(QMainWindow):
         # 建立主介面
         self.setup_ui()
         self.update_display()
+        self.update_panel_selection()
 
     def setup_ui(self):
         """設定使用者介面"""
@@ -492,8 +520,8 @@ class ModernBlackjackCounterApp(QMainWindow):
         card_input_layout.setSpacing(8)
 
         # 玩家手牌區域
-        player_group = QGroupBox("玩家手牌")
-        player_group.setStyleSheet(
+        self.player_group = ClickableGroupBox("玩家手牌")
+        self.player_group.setStyleSheet(
             """
             QGroupBox {
                 font-weight: bold;
@@ -509,6 +537,7 @@ class ModernBlackjackCounterApp(QMainWindow):
             }
         """
         )
+        self.player_group.clicked.connect(lambda: self.on_panel_clicked("player"))
         player_layout = QVBoxLayout()
         player_buttons = self.create_card_buttons("玩家", self.add_player_card, "player")
         player_layout.addWidget(player_buttons)
@@ -532,12 +561,12 @@ class ModernBlackjackCounterApp(QMainWindow):
         self.split_button.setEnabled(False)
         player_layout.addWidget(self.split_button)
 
-        player_group.setLayout(player_layout)
-        card_input_layout.addWidget(player_group, 1)  # stretch = 1
+        self.player_group.setLayout(player_layout)
+        card_input_layout.addWidget(self.player_group, 1)  # stretch = 1
 
         # 莊家牌區域
-        dealer_group = QGroupBox("莊家牌")
-        dealer_group.setStyleSheet(
+        self.dealer_group = ClickableGroupBox("莊家牌")
+        self.dealer_group.setStyleSheet(
             """
             QGroupBox {
                 font-weight: bold;
@@ -553,15 +582,16 @@ class ModernBlackjackCounterApp(QMainWindow):
             }
         """
         )
+        self.dealer_group.clicked.connect(lambda: self.on_panel_clicked("dealer"))
         dealer_layout = QVBoxLayout()
         dealer_buttons = self.create_card_buttons("莊家", self.set_dealer_card, "dealer")
         dealer_layout.addWidget(dealer_buttons)
-        dealer_group.setLayout(dealer_layout)
-        card_input_layout.addWidget(dealer_group, 1)  # stretch = 1
+        self.dealer_group.setLayout(dealer_layout)
+        card_input_layout.addWidget(self.dealer_group, 1)  # stretch = 1
 
         # 其他玩家區域
-        others_group = QGroupBox("其他玩家")
-        others_group.setStyleSheet(
+        self.others_group = ClickableGroupBox("其他玩家")
+        self.others_group.setStyleSheet(
             """
             QGroupBox {
                 font-weight: bold;
@@ -577,6 +607,7 @@ class ModernBlackjackCounterApp(QMainWindow):
             }
         """
         )
+        self.others_group.clicked.connect(lambda: self.on_panel_clicked("other"))
         others_layout = QVBoxLayout()
         others_buttons = self.create_card_buttons("其他", self.add_other_card, "other")
         others_layout.addWidget(others_buttons)
@@ -606,8 +637,8 @@ class ModernBlackjackCounterApp(QMainWindow):
         )
         others_layout.addWidget(self.other_cards_text)
 
-        others_group.setLayout(others_layout)
-        card_input_layout.addWidget(others_group, 1)  # stretch = 1
+        self.others_group.setLayout(others_layout)
+        card_input_layout.addWidget(self.others_group, 1)  # stretch = 1
 
         layout.addLayout(card_input_layout)
 
@@ -864,6 +895,55 @@ class ModernBlackjackCounterApp(QMainWindow):
     def update_button_states(self):
         """更新按鈕狀態"""
         self.split_button.setEnabled(self.game_state.can_split_current_hand())
+    
+    def update_panel_selection(self):
+        """更新控制面板選中狀態"""
+        # 定義選中和未選中的樣式
+        selected_style = """
+            QGroupBox {
+                font-weight: bold;
+                border: 2px solid #f39c12;
+                border-radius: 8px;
+                margin-top: 2px;
+                padding-top: 2px;
+            }
+            QGroupBox::title {
+                color: #f39c12;
+                subcontrol-origin: margin;
+                left: 10px;
+            }
+        """
+        
+        unselected_style = """
+            QGroupBox {
+                font-weight: bold;
+                border: 2px solid #95a5a6;
+                border-radius: 8px;
+                margin-top: 2px;
+                padding-top: 2px;
+            }
+            QGroupBox::title {
+                color: #95a5a6;
+                subcontrol-origin: margin;
+                left: 10px;
+            }
+        """
+        
+        # 根據 last_card_action 更新樣式
+        if self.player_group:
+            self.player_group.setStyleSheet(
+                selected_style if self.last_card_action == "player" else unselected_style
+            )
+        
+        if self.dealer_group:
+            self.dealer_group.setStyleSheet(
+                selected_style if self.last_card_action == "dealer" else unselected_style
+            )
+        
+        if self.others_group:
+            self.others_group.setStyleSheet(
+                selected_style if self.last_card_action == "other" else unselected_style
+            )
 
     def get_action_color(self, action: str) -> str:
         """取得動作對應的顏色"""
@@ -884,6 +964,7 @@ class ModernBlackjackCounterApp(QMainWindow):
         self.game_state.add_player_card(card)
         self.last_card_action = "player"
         self.update_display()
+        self.update_panel_selection()
 
     def set_dealer_card(self, card: str):
         """新增莊家牌"""
@@ -891,6 +972,7 @@ class ModernBlackjackCounterApp(QMainWindow):
         self.game_state.add_dealer_card(card)
         self.last_card_action = "dealer"
         self.update_display()
+        self.update_panel_selection()
 
     def add_other_card(self, card: str):
         """新增其他玩家的牌"""
@@ -898,6 +980,7 @@ class ModernBlackjackCounterApp(QMainWindow):
         self.other_player_cards.append(card)
         self.last_card_action = "other"
         self.update_display()
+        self.update_panel_selection()
 
     def add_card_smart(self, card: str):
         """根據最後操作位置智慧新增卡牌"""
@@ -981,6 +1064,32 @@ class ModernBlackjackCounterApp(QMainWindow):
         """處理手牌選擇事件"""
         if self.game_state.set_current_hand_index(index):
             self.update_display()
+    
+    def on_panel_clicked(self, panel_type: str):
+        """處理控制面板點擊事件"""
+        self.last_card_action = panel_type
+        # 同步更新當前面板索引
+        if panel_type in self.panel_order:
+            self.current_panel_index = self.panel_order.index(panel_type)
+        self.update_panel_selection()
+    
+    def switch_to_next_panel(self):
+        """切換到下一個面板"""
+        self.current_panel_index = (self.current_panel_index + 1) % len(self.panel_order)
+        self.on_panel_clicked(self.panel_order[self.current_panel_index])
+    
+    def switch_to_previous_panel(self):
+        """切換到上一個面板"""
+        self.current_panel_index = (self.current_panel_index - 1) % len(self.panel_order)
+        self.on_panel_clicked(self.panel_order[self.current_panel_index])
+    
+    def focusNextPrevChild(self, next: bool) -> bool:
+        """覆蓋焦點切換行為，將 Tab 鍵用於面板切換"""
+        if next:
+            self.switch_to_next_panel()
+        else:
+            self.switch_to_previous_panel()
+        return True  # 返回 True 表示我們處理了焦點切換
 
     def load_shortcuts(self) -> Dict[str, Dict[str, Any]]:
         """載入快捷鍵設定"""
