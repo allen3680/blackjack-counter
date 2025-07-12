@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
     QLabel, QPushButton, QGroupBox, QGridLayout, QScrollArea,
     QFrame, QTabWidget, QMessageBox,
-    QSplitter, QSizePolicy
+    QSplitter, QSizePolicy, QTextEdit
 )
 from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, pyqtSignal, QRect
 from PyQt6.QtGui import QFont, QPalette, QColor, QLinearGradient, QCursor, QMouseEvent
@@ -169,6 +169,8 @@ class ModernBlackjackCounterApp(QMainWindow):
         
         # GUI 元件參考
         self.hand_frames: List[HandFrame] = []
+        self.last_card_action: str = "player"  # 追蹤最後的牌操作: "player" 或 "dealer"
+        self.other_player_cards: List[str] = []  # 追蹤其他玩家的牌
         
         # 設定深色主題
         self.setStyleSheet("""
@@ -313,23 +315,36 @@ class ModernBlackjackCounterApp(QMainWindow):
         top_layout = QHBoxLayout()
         
         # 莊家區域
-        dealer_group = QGroupBox("莊家明牌")
+        dealer_group = QGroupBox("莊家牌")
         dealer_layout = QVBoxLayout()
         
+        # 莊家牌顯示容器
+        dealer_cards_widget = QWidget()
+        dealer_cards_widget.setStyleSheet("""
+            QWidget {
+                background-color: #2b2b2b;
+                border: 2px solid #444;
+                border-radius: 10px;
+                padding: 15px;
+            }
+        """)
+        dealer_cards_layout = QVBoxLayout()
+        
+        # 牌面顯示
         self.dealer_label = QLabel("無牌")
         self.dealer_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.dealer_label.setStyleSheet("""
             QLabel {
-                font-size: 36px;
+                font-size: 24px;
                 font-weight: bold;
                 color: #f39c12;
-                background-color: #2b2b2b;
-                border: 2px solid #444;
-                border-radius: 10px;
-                padding: 20px;
+                padding: 10px;
             }
         """)
-        dealer_layout.addWidget(self.dealer_label)
+        dealer_cards_layout.addWidget(self.dealer_label)
+        
+        dealer_cards_widget.setLayout(dealer_cards_layout)
+        dealer_layout.addWidget(dealer_cards_widget)
         dealer_group.setLayout(dealer_layout)
         top_layout.addWidget(dealer_group)
         
@@ -401,41 +416,106 @@ class ModernBlackjackCounterApp(QMainWindow):
         panel = QGroupBox("控制面板")
         layout = QVBoxLayout()
         
-        # 牌輸入區域
-        input_tabs = QTabWidget()
+        # 牌輸入區域 - 水平佈局
+        card_input_layout = QHBoxLayout()
+        card_input_layout.setSpacing(15)
         
-        # 玩家牌頁面
-        player_tab = self.create_card_buttons("玩家", self.add_player_card)
-        input_tabs.addTab(player_tab, "玩家手牌")
+        # 玩家手牌區域
+        player_group = QGroupBox("玩家手牌")
+        player_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 2px solid #3498db;
+                border-radius: 8px;
+                margin-top: 10px;
+                padding-top: 10px;
+            }
+            QGroupBox::title {
+                color: #3498db;
+                subcontrol-origin: margin;
+                left: 10px;
+            }
+        """)
+        player_layout = QVBoxLayout()
+        player_buttons = self.create_card_buttons("玩家", self.add_player_card, "player")
+        player_layout.addWidget(player_buttons)
+        player_group.setLayout(player_layout)
+        card_input_layout.addWidget(player_group, 1)  # stretch = 1
         
-        # 莊家牌頁面
-        dealer_tab = self.create_card_buttons("莊家", self.set_dealer_card)
-        input_tabs.addTab(dealer_tab, "莊家明牌")
+        # 莊家牌區域
+        dealer_group = QGroupBox("莊家牌")
+        dealer_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 2px solid #f39c12;
+                border-radius: 8px;
+                margin-top: 10px;
+                padding-top: 10px;
+            }
+            QGroupBox::title {
+                color: #f39c12;
+                subcontrol-origin: margin;
+                left: 10px;
+            }
+        """)
+        dealer_layout = QVBoxLayout()
+        dealer_buttons = self.create_card_buttons("莊家", self.set_dealer_card, "dealer")
+        dealer_layout.addWidget(dealer_buttons)
+        dealer_group.setLayout(dealer_layout)
+        card_input_layout.addWidget(dealer_group, 1)  # stretch = 1
         
-        # 其他玩家牌頁面
-        others_tab = self.create_card_buttons("其他", self.add_other_card)
-        input_tabs.addTab(others_tab, "其他玩家")
+        # 其他玩家區域
+        others_group = QGroupBox("其他玩家")
+        others_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 2px solid #95a5a6;
+                border-radius: 8px;
+                margin-top: 10px;
+                padding-top: 10px;
+            }
+            QGroupBox::title {
+                color: #95a5a6;
+                subcontrol-origin: margin;
+                left: 10px;
+            }
+        """)
+        others_layout = QVBoxLayout()
+        others_buttons = self.create_card_buttons("其他", self.add_other_card, "other")
+        others_layout.addWidget(others_buttons)
         
-        layout.addWidget(input_tabs)
+        # 顯示已輸入的牌
+        cards_label = QLabel("已輸入:")
+        cards_label.setStyleSheet("color: #95a5a6; font-size: 13px; margin-top: 5px;")
+        others_layout.addWidget(cards_label)
+        
+        self.other_cards_text = QTextEdit()
+        self.other_cards_text.setMaximumHeight(30)  # 限制高度
+        self.other_cards_text.setReadOnly(True)  # 只讀
+        self.other_cards_text.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)  # 自動換行
+        self.other_cards_text.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.other_cards_text.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.other_cards_text.setStyleSheet("""
+            QTextEdit {
+                background-color: #2b2b2b;
+                border: 1px solid #444;
+                border-radius: 4px;
+                color: #aaa;
+                font-size: 13px;
+                padding: 4px 8px;
+            }
+        """)
+        others_layout.addWidget(self.other_cards_text)
+        
+        others_group.setLayout(others_layout)
+        card_input_layout.addWidget(others_group, 1)  # stretch = 1
+        
+        layout.addLayout(card_input_layout)
         
         # 動作按鈕
         buttons_layout = QHBoxLayout()
         
         # 遊戲動作
-        self.stand_button = QPushButton("停牌 (S)")
-        self.stand_button.setStyleSheet("""
-            QPushButton {
-                background-color: #27ae60;
-                font-size: 16px;
-                padding: 10px 20px;
-            }
-            QPushButton:hover {
-                background-color: #2ecc71;
-            }
-        """)
-        self.stand_button.clicked.connect(self.stand_hand)
-        buttons_layout.addWidget(self.stand_button)
-        
         self.split_button = QPushButton("分牌 (P)")
         self.split_button.setStyleSheet("""
             QPushButton {
@@ -454,21 +534,7 @@ class ModernBlackjackCounterApp(QMainWindow):
         buttons_layout.addStretch()
         
         # 控制按鈕
-        backspace_button = QPushButton("退牌 (←)")
-        backspace_button.setStyleSheet("""
-            QPushButton {
-                background-color: #e67e22;
-                font-size: 16px;
-                padding: 10px 20px;
-            }
-            QPushButton:hover {
-                background-color: #d35400;
-            }
-        """)
-        backspace_button.clicked.connect(self.remove_last_card)
-        buttons_layout.addWidget(backspace_button)
-        
-        clear_button = QPushButton("清除手牌")
+        clear_button = QPushButton("新回合")
         clear_button.clicked.connect(self.clear_hand)
         buttons_layout.addWidget(clear_button)
         
@@ -500,7 +566,7 @@ class ModernBlackjackCounterApp(QMainWindow):
         panel.setLayout(layout)
         return panel
     
-    def create_card_buttons(self, category: str, callback) -> QWidget:
+    def create_card_buttons(self, category: str, callback, card_type: str = None) -> QWidget:
         """建立牌按鈕網格"""
         widget = QWidget()
         grid = QGridLayout()
@@ -536,6 +602,27 @@ class ModernBlackjackCounterApp(QMainWindow):
             btn.clicked.connect(lambda checked, c=card: callback(c))
             grid.addWidget(btn, i // 4, i % 4)
         
+        # 添加退牌按鈕
+        if card_type in ["player", "dealer", "other"]:
+            backspace_btn = QPushButton("←")
+            backspace_btn.setToolTip("退牌")
+            
+            # 統一使用紅色
+            backspace_btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #e74c3c;
+                    color: white;
+                    font-weight: bold;
+                    font-size: 16px;
+                }
+                QPushButton:hover {
+                    background-color: #c0392b;
+                }
+            """)
+            
+            backspace_btn.clicked.connect(lambda: self.remove_specific_card(card_type))
+            grid.addWidget(backspace_btn, 3, 1)  # 放在K旁邊
+        
         widget.setLayout(grid)
         return widget
     
@@ -546,6 +633,24 @@ class ModernBlackjackCounterApp(QMainWindow):
         self.update_hands_display()
         self.update_decision_display()
         self.update_button_states()
+        self.update_other_cards_display()
+    
+    def update_other_cards_display(self):
+        """更新其他玩家牌顯示"""
+        if not self.other_player_cards:
+            self.other_cards_text.clear()
+            return
+        
+        # 反向列表，讓最新的牌在前，用空格分隔以便自動換行
+        reversed_cards = list(reversed(self.other_player_cards))
+        cards_text = " ".join(reversed_cards)
+        
+        self.other_cards_text.setText(cards_text)
+        
+        # 滾動到開頭顯示最新的牌
+        cursor = self.other_cards_text.textCursor()
+        cursor.movePosition(cursor.MoveOperation.Start)
+        self.other_cards_text.setTextCursor(cursor)
     
     def update_counts(self):
         """更新計數顯示"""
@@ -575,8 +680,16 @@ class ModernBlackjackCounterApp(QMainWindow):
     
     def update_dealer_display(self):
         """更新莊家牌顯示"""
-        dealer_card = self.game_state.get_dealer_card_string()
-        self.dealer_label.setText(dealer_card if dealer_card else "無牌")
+        if not self.game_state.dealer_cards:
+            self.dealer_label.setText("無牌")
+        elif len(self.game_state.dealer_cards) == 1:
+            # 只有一張牌時，顯示為底牌
+            self.dealer_label.setText(f"底牌: {self.game_state.dealer_cards[0]}")
+        else:
+            # 有多張牌時，分開顯示底牌和其他牌
+            upcard = self.game_state.dealer_cards[0]
+            other_cards = ", ".join(self.game_state.dealer_cards[1:])
+            self.dealer_label.setText(f"底牌: {upcard} | 其他: {other_cards}")
     
     def update_hands_display(self):
         """更新手牌顯示"""
@@ -667,31 +780,65 @@ class ModernBlackjackCounterApp(QMainWindow):
         """新增玩家手牌"""
         self.counter.add_card(card)
         self.game_state.add_player_card(card)
+        self.last_card_action = "player"
         self.update_display()
     
     def set_dealer_card(self, card: str):
-        """設定莊家明牌"""
+        """新增莊家牌"""
         self.counter.add_card(card)
-        self.game_state.set_dealer_card(card)
+        self.game_state.add_dealer_card(card)
+        self.last_card_action = "dealer"
         self.update_display()
     
     def add_other_card(self, card: str):
         """新增其他玩家的牌"""
         self.counter.add_card(card)
+        self.other_player_cards.append(card)
+        self.last_card_action = "other"
         self.update_display()
     
     def clear_hand(self):
         """清除手牌"""
         self.game_state.clear_hand()
+        self.other_player_cards.clear()
         self.update_display()
     
     def remove_last_card(self):
         """移除最後一張牌"""
-        removed_card = self.game_state.remove_last_card_from_current_hand()
-        if removed_card:
-            # 從計數器中移除這張牌
-            self.counter.remove_card(removed_card)
-            self.update_display()
+        # 根據最後的操作決定移除哪邊的牌
+        if self.last_card_action == "player":
+            removed_card = self.game_state.remove_last_card_from_current_hand()
+            if removed_card:
+                self.counter.remove_card(removed_card)
+                self.update_display()
+        elif self.last_card_action == "dealer":
+            removed_card = self.game_state.remove_last_dealer_card()
+            if removed_card:
+                self.counter.remove_card(removed_card)
+                self.update_display()
+        elif self.last_card_action == "other":
+            if self.other_player_cards:
+                removed_card = self.other_player_cards.pop()
+                self.counter.remove_card(removed_card)
+                self.update_display()
+    
+    def remove_specific_card(self, card_type: str):
+        """移除特定類型的牌"""
+        if card_type == "player":
+            removed_card = self.game_state.remove_last_card_from_current_hand()
+            if removed_card:
+                self.counter.remove_card(removed_card)
+                self.update_display()
+        elif card_type == "dealer":
+            removed_card = self.game_state.remove_last_dealer_card()
+            if removed_card:
+                self.counter.remove_card(removed_card)
+                self.update_display()
+        elif card_type == "other":
+            if self.other_player_cards:
+                removed_card = self.other_player_cards.pop()
+                self.counter.remove_card(removed_card)
+                self.update_display()
     
     def new_shoe(self):
         """開始新牌靴"""
@@ -702,6 +849,7 @@ class ModernBlackjackCounterApp(QMainWindow):
         if reply == QMessageBox.StandardButton.Yes:
             self.counter.new_shoe()
             self.game_state.clear_hand()
+            self.other_player_cards.clear()
             self.update_display()
     
     def stand_hand(self):
@@ -723,9 +871,7 @@ class ModernBlackjackCounterApp(QMainWindow):
     
     def keyPressEvent(self, event):
         """處理鍵盤事件"""
-        if event.key() in (Qt.Key.Key_S, Qt.Key.Key_s):
-            self.stand_hand()
-        elif event.key() in (Qt.Key.Key_P, Qt.Key.Key_p):
+        if event.key() in (Qt.Key.Key_P, Qt.Key.Key_p):
             if self.split_button.isEnabled():
                 self.split_hand()
         elif event.key() == Qt.Key.Key_Backspace:

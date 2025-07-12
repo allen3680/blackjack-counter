@@ -10,7 +10,7 @@ class GameState:
     def __init__(self) -> None:
         self.player_hands: List[Hand] = [Hand()]  # 初始化一個手牌
         self.current_hand_index: int = 0  # 當前活動手牌索引
-        self.dealer_card: Optional[str] = None
+        self.dealer_cards: List[str] = []  # 莊家所有牌
         self.is_new_hand: bool = True
         self.max_hands: int = 4  # 最多允許4個分牌手
 
@@ -26,6 +26,11 @@ class GameState:
     def player_cards(self) -> List[str]:
         """向後相容：取得當前手牌的牌張"""
         return self.current_hand.cards
+    
+    @property
+    def dealer_card(self) -> Optional[str]:
+        """向後相容：取得莊家明牌（第一張牌）"""
+        return self.dealer_cards[0] if self.dealer_cards else None
 
     def add_player_card(self, card: str) -> None:
         """新增一張牌到當前玩家手牌"""
@@ -37,15 +42,30 @@ class GameState:
             self.move_to_next_active_hand()
 
     def set_dealer_card(self, card: str) -> None:
-        """設定莊家的明牌"""
-        self.dealer_card = card
+        """設定莊家的明牌（向後相容）"""
+        self.dealer_cards = [card]
         self.is_new_hand = False
+    
+    def add_dealer_card(self, card: str) -> None:
+        """新增一張牌到莊家手牌"""
+        self.dealer_cards.append(card)
+        self.is_new_hand = False
+    
+    def remove_last_dealer_card(self) -> Optional[str]:
+        """移除莊家最後一張牌"""
+        if self.dealer_cards:
+            return self.dealer_cards.pop()
+        return None
+    
+    def get_dealer_upcard(self) -> Optional[str]:
+        """取得莊家明牌（第一張牌）"""
+        return self.dealer_cards[0] if self.dealer_cards else None
 
     def clear_hand(self) -> None:
         """清除所有手牌"""
         self.player_hands = [Hand()]
         self.current_hand_index = 0
-        self.dealer_card = None
+        self.dealer_cards = []
         self.is_new_hand = True
 
     def get_player_hand_string(self) -> str:
@@ -54,7 +74,9 @@ class GameState:
 
     def get_dealer_card_string(self) -> str:
         """取得格式化的莊家牌"""
-        return self.dealer_card if self.dealer_card else "無牌"
+        if not self.dealer_cards:
+            return "無牌"
+        return ", ".join(self.dealer_cards)
 
     def can_split_current_hand(self) -> bool:
         """檢查當前手牌是否可以分牌"""
