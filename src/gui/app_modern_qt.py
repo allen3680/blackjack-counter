@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
     QLabel, QPushButton, QGroupBox, QGridLayout, QScrollArea,
     QFrame, QTabWidget, QMessageBox,
-    QSplitter, QSizePolicy, QTextEdit
+    QSizePolicy, QTextEdit
 )
 from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, pyqtSignal, QRect
 from PyQt6.QtGui import QFont, QPalette, QColor, QLinearGradient, QCursor, QMouseEvent
@@ -308,7 +308,9 @@ class ModernBlackjackCounterApp(QMainWindow):
     
     def create_game_area(self) -> QWidget:
         """建立遊戲區域"""
-        splitter = QSplitter(Qt.Orientation.Vertical)
+        game_widget = QWidget()
+        game_layout = QVBoxLayout()
+        game_layout.setSpacing(15)
         
         # 上半部分：莊家和決策
         top_widget = QWidget()
@@ -374,16 +376,12 @@ class ModernBlackjackCounterApp(QMainWindow):
         """)
         decision_layout.addWidget(self.decision_label)
         
-        self.explanation_label = QLabel("")
-        self.explanation_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.explanation_label.setStyleSheet("color: #888; font-size: 14px;")
-        decision_layout.addWidget(self.explanation_label)
         
         decision_group.setLayout(decision_layout)
         top_layout.addWidget(decision_group)
         
         top_widget.setLayout(top_layout)
-        splitter.addWidget(top_widget)
+        game_layout.addWidget(top_widget)
         
         # 下半部分：玩家手牌（水平佈局）
         hands_group = QGroupBox("玩家手牌")
@@ -407,9 +405,10 @@ class ModernBlackjackCounterApp(QMainWindow):
         
         hands_group_layout.addWidget(container_widget)
         hands_group.setLayout(hands_group_layout)
-        splitter.addWidget(hands_group)
+        game_layout.addWidget(hands_group)
         
-        return splitter
+        game_widget.setLayout(game_layout)
+        return game_widget
     
     def create_control_panel(self) -> QWidget:
         """建立控制面板"""
@@ -549,18 +548,6 @@ class ModernBlackjackCounterApp(QMainWindow):
         """)
         new_shoe_button.clicked.connect(self.new_shoe)
         buttons_layout.addWidget(new_shoe_button)
-        
-        quit_button = QPushButton("結束")
-        quit_button.setStyleSheet("""
-            QPushButton {
-                background-color: #e74c3c;
-            }
-            QPushButton:hover {
-                background-color: #c0392b;
-            }
-        """)
-        quit_button.clicked.connect(self.close)
-        buttons_layout.addWidget(quit_button)
         
         layout.addLayout(buttons_layout)
         panel.setLayout(layout)
@@ -743,7 +730,6 @@ class ModernBlackjackCounterApp(QMainWindow):
                     padding: 20px;
                 }}
             """)
-            self.explanation_label.setText(explanation)
         else:
             self.decision_label.setText("請加入手牌")
             self.decision_label.setStyleSheet("""
@@ -757,7 +743,6 @@ class ModernBlackjackCounterApp(QMainWindow):
                     padding: 20px;
                 }
             """)
-            self.explanation_label.setText("")
     
     def update_button_states(self):
         """更新按鈕狀態"""
