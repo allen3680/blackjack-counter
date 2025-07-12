@@ -1,0 +1,43 @@
+# Wong Halves 計數系統配置
+# 三級平衡計數系統，使用半點數值
+
+counting_system:
+  name: "Wong Halves"
+  description: "專業等級的平衡計數系統，由 Stanford Wong 開發"
+  
+# 牌值對照表
+card_values:
+  '2': 0.5
+  '3': 1.0
+  '4': 1.0
+  '5': 1.5
+  '6': 1.0
+  '7': 0.5
+  '8': 0.0
+  '9': -0.5
+  '10': -1.0
+  'J': -1.0
+  'Q': -1.0
+  'K': -1.0
+  'A': -1.0
+
+# 系統特性
+properties:
+  balanced: true         # 平衡系統（一副牌計數總和為0）
+  level: 3              # 三級系統（使用0.5的倍數）
+  insurance_correlation: 0.99   # 保險相關性
+  betting_correlation: 0.99     # 下注相關性
+  playing_efficiency: 0.57      # 玩牌效率
+
+# 建議的真實計數行動門檻
+betting_thresholds:
+  increase_bet: 2.0     # 真實計數 >= 2 時增加下注
+  max_bet: 4.0         # 真實計數 >= 4 時最大下注
+  take_insurance: 3.0   # 真實計數 >= 3 時買保險
+  
+# 優勢說明
+advantages:
+  - "高度準確的下注相關性（0.99）"
+  - "適合多副牌遊戲"
+  - "提供精確的玩牌決策調整"
+  - "專業玩家廣泛使用"
