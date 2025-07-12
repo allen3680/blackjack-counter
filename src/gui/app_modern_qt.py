@@ -27,9 +27,9 @@ class HandFrame(QGroupBox):
     clicked = pyqtSignal(int)
     
     def __init__(self, index: int, hand, is_active: bool, parent=None):
-        title = f"#{index + 1}"
+        title = f"手牌 {index + 1}"
         if hand.is_split_hand:
-            title += " 分"
+            title += " (分牌)"
         if is_active and hand.status == HandStatus.ACTIVE:
             title += " ◄"
         
@@ -429,7 +429,8 @@ class ModernBlackjackCounterApp(QMainWindow):
         
         # 手牌容器
         self.hands_container = QWidget()
-        self.hands_container.setStyleSheet("background-color: #1e1e1e;")
+        self.hands_container.setObjectName("handsContainer")
+        self.hands_container.setStyleSheet("#handsContainer { background-color: #1e1e1e; }")
         self.hands_layout = QGridLayout()
         self.hands_layout.setSpacing(10)
         self.hands_layout.setContentsMargins(10, 10, 10, 10)
