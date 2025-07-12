@@ -1,0 +1,138 @@
+# 鍵盤快捷鍵配置檔
+# 定義21點遊戲的鍵盤快捷鍵
+
+# 快捷鍵設定
+shortcuts:
+  # 分牌動作
+  split_hand:
+    name: "分牌"
+    description: "將兩張相同點數的牌分成兩手"
+    keys: ["P"]
+    condition: "split_enabled"  # 只在分牌按鈕啟用時有效
+    
+  # 移除卡牌
+  remove_card:
+    name: "移除卡牌"
+    description: "移除最後一張加入的牌"
+    keys: ["Backspace"]
+    
+  # 卡牌輸入快捷鍵 - 根據最後操作位置自動新增
+  card_ace:
+    name: "輸入 A"
+    description: "新增一張 A 到最後操作的位置"
+    keys: ["1"]
+
+  card_2:
+    name: "輸入 2"
+    description: "新增一張 2 到最後操作的位置"
+    keys: ["2"]
+    
+  card_3:
+    name: "輸入 3"
+    description: "新增一張 3 到最後操作的位置"
+    keys: ["3"]
+    
+  card_4:
+    name: "輸入 4"
+    description: "新增一張 4 到最後操作的位置"
+    keys: ["4"]
+    
+  card_5:
+    name: "輸入 5"
+    description: "新增一張 5 到最後操作的位置"
+    keys: ["5"]
+    
+  card_6:
+    name: "輸入 6"
+    description: "新增一張 6 到最後操作的位置"
+    keys: ["6"]
+    
+  card_7:
+    name: "輸入 7"
+    description: "新增一張 7 到最後操作的位置"
+    keys: ["7"]
+    
+  card_8:
+    name: "輸入 8"
+    description: "新增一張 8 到最後操作的位置"
+    keys: ["8"]
+    
+  card_9:
+    name: "輸入 9"
+    description: "新增一張 9 到最後操作的位置"
+    keys: ["9"]
+    
+  card_10:
+    name: "輸入 10"
+    description: "新增一張 10 到最後操作的位置"
+    keys: ["0"]  # 使用 0 代表 10
+    
+  card_jack:
+    name: "輸入 J"
+    description: "新增一張 J 到最後操作的位置"
+    keys: ["J"]
+    
+  card_queen:
+    name: "輸入 Q"  
+    description: "新增一張 Q 到最後操作的位置"
+    keys: ["Q"]
+    
+  card_king:
+    name: "輸入 K"
+    description: "新增一張 K 到最後操作的位置"
+    keys: ["K"]
+    
+  # 預留的快捷鍵設定，方便未來擴充
+  # hit:
+  #   name: "要牌"
+  #   description: "再拿一張牌"
+  #   keys: ["H", "Space"]
+  #   
+  # stand:
+  #   name: "停牌"
+  #   description: "保持現有手牌"
+  #   keys: ["S"]
+  #   
+  # double_down:
+  #   name: "加倍"
+  #   description: "加倍下注並只拿一張牌"
+  #   keys: ["D"]
+  #   condition: "double_enabled"
+  #   
+  # surrender:
+  #   name: "投降"
+  #   description: "放棄這手牌，拿回一半賭注"
+  #   keys: ["R"]
+  #   condition: "surrender_enabled"
+  #   
+  # new_game:
+  #   name: "新遊戲"
+  #   description: "開始新的一局"
+  #   keys: ["N", "Return"]
+  #   
+  # clear_table:
+  #   name: "清空檯面"
+  #   description: "清除所有牌"
+  #   keys: ["C"]
+  #   
+  # add_player_card:
+  #   name: "新增玩家牌"
+  #   description: "為當前手牌新增一張牌"
+  #   keys: ["A"]
+  #   
+  # add_dealer_card:
+  #   name: "新增莊家牌"
+  #   description: "為莊家新增一張牌"
+  #   keys: ["Shift+A"]
+
+# 按鍵映射說明
+# 支援的特殊按鍵名稱：
+# - Backspace: 退格鍵
+# - Return/Enter: 回車鍵
+# - Space: 空白鍵
+# - Tab: Tab鍵
+# - Escape: Esc鍵
+# - Delete: 刪除鍵
+# - Shift+<key>: 組合鍵（Shift + 其他鍵）
+# - Ctrl+<key>: 組合鍵（Ctrl + 其他鍵）
+# - Alt+<key>: 組合鍵（Alt + 其他鍵）

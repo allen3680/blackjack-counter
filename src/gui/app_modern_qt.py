@@ -5,7 +5,8 @@
 """
 
 import sys
-from typing import List, Optional
+import yaml
+from typing import List, Optional, Dict, Any
 from PyQt6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -27,6 +28,7 @@ from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, pyqtSigna
 from PyQt6.QtGui import QFont, QPalette, QColor, QLinearGradient, QCursor, QMouseEvent
 
 from src.core import BasicStrategy, GameState, WongHalvesCounter, HandStatus
+from src.config import SHORTCUTS_CONFIG
 
 
 class HandFrame(QGroupBox):
@@ -184,6 +186,9 @@ class ModernBlackjackCounterApp(QMainWindow):
         self.counter = WongHalvesCounter(num_decks=8)
         self.strategy = BasicStrategy()
         self.game_state = GameState()
+
+        # 載入快捷鍵設定
+        self.shortcuts: Dict[str, Dict[str, Any]] = self.load_shortcuts()
 
         # GUI 元件參考
         self.hand_frames: List[HandFrame] = []
@@ -894,6 +899,15 @@ class ModernBlackjackCounterApp(QMainWindow):
         self.last_card_action = "other"
         self.update_display()
 
+    def add_card_smart(self, card: str):
+        """根據最後操作位置智慧新增卡牌"""
+        if self.last_card_action == "player":
+            self.add_player_card(card)
+        elif self.last_card_action == "dealer":
+            self.set_dealer_card(card)
+        elif self.last_card_action == "other":
+            self.add_other_card(card)
+
     def clear_hand(self):
         """清除手牌"""
         self.game_state.clear_hand()
@@ -968,13 +982,95 @@ class ModernBlackjackCounterApp(QMainWindow):
         if self.game_state.set_current_hand_index(index):
             self.update_display()
 
+    def load_shortcuts(self) -> Dict[str, Dict[str, Any]]:
+        """載入快捷鍵設定"""
+        try:
+            with open(SHORTCUTS_CONFIG, "r", encoding="utf-8") as f:
+                config = yaml.safe_load(f)
+                return config.get("shortcuts", {})
+        except FileNotFoundError:
+            print(f"找不到快捷鍵設定檔：{SHORTCUTS_CONFIG}")
+            return {}
+        except yaml.YAMLError as e:
+            print(f"快捷鍵設定檔格式錯誤：{e}")
+            return {}
+
+    def get_qt_key(self, key_name: str):
+        """將按鍵名稱轉換為Qt按鍵常數"""
+        # 處理組合鍵
+        if "+" in key_name:
+            # 暫時不處理組合鍵，留待未來擴充
+            return None
+            
+        # 按鍵映射表
+        key_map = {
+            "Backspace": Qt.Key.Key_Backspace,
+            "Return": Qt.Key.Key_Return,
+            "Enter": Qt.Key.Key_Return,
+            "Space": Qt.Key.Key_Space,
+            "Tab": Qt.Key.Key_Tab,
+            "Escape": Qt.Key.Key_Escape,
+            "Delete": Qt.Key.Key_Delete,
+        }
+        
+        # 檢查是否為特殊按鍵
+        if key_name in key_map:
+            return key_map[key_name]
+            
+        # 處理單個字母或數字
+        if len(key_name) == 1:
+            if key_name.isalpha():
+                # PyQt6 只有大寫字母的Key常數
+                return getattr(Qt.Key, f"Key_{key_name.upper()}", None)
+            elif key_name.isdigit():
+                return getattr(Qt.Key, f"Key_{key_name}", None)
+                
+        return None
+
     def keyPressEvent(self, event):
         """處理鍵盤事件"""
-        if event.key() in (Qt.Key.Key_P, Qt.Key.Key_p):
-            if self.split_button.isEnabled():
-                self.split_hand()
-        elif event.key() == Qt.Key.Key_Backspace:
-            self.remove_last_card()
+        pressed_key = event.key()
+        
+        # 遍歷所有快捷鍵設定
+        for action_name, shortcut_config in self.shortcuts.items():
+            keys = shortcut_config.get("keys", [])
+            
+            # 檢查按下的鍵是否匹配任何設定的按鍵
+            for key_name in keys:
+                qt_key = self.get_qt_key(key_name)
+                if qt_key and pressed_key == qt_key:
+                    # 檢查條件（如果有）
+                    condition = shortcut_config.get("condition")
+                    
+                    # 執行對應的動作
+                    if action_name == "split_hand":
+                        if not condition or (condition == "split_enabled" and self.split_button.isEnabled()):
+                            self.split_hand()
+                            return
+                    elif action_name == "remove_card":
+                        self.remove_last_card()
+                        return
+                    # 處理卡牌輸入
+                    elif action_name.startswith("card_"):
+                        # 從 action_name 中提取卡牌值
+                        card_map = {
+                            "card_ace": "A",
+                            "card_2": "2",
+                            "card_3": "3",
+                            "card_4": "4",
+                            "card_5": "5",
+                            "card_6": "6",
+                            "card_7": "7",
+                            "card_8": "8",
+                            "card_9": "9",
+                            "card_10": "10",
+                            "card_jack": "J",
+                            "card_queen": "Q",
+                            "card_king": "K"
+                        }
+                        if action_name in card_map:
+                            self.add_card_smart(card_map[action_name])
+                            return
 
 
 def main():
