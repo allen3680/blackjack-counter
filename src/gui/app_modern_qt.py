@@ -27,9 +27,9 @@ class HandFrame(QGroupBox):
     clicked = pyqtSignal(int)
     
     def __init__(self, index: int, hand, is_active: bool, parent=None):
-        title = f"手牌 {index + 1}"
+        title = f"#{index + 1}"
         if hand.is_split_hand:
-            title += " (分牌)"
+            title += " 分"
         if is_active and hand.status == HandStatus.ACTIVE:
             title += " ◄"
         
@@ -40,9 +40,9 @@ class HandFrame(QGroupBox):
         self.hand = hand
         self.is_active = is_active
         
-        # 設定固定寬度以適應水平佈局
-        self.setMinimumWidth(180)
-        self.setMaximumWidth(250)
+        # 設定固定寬度以適應網格佈局
+        self.setMinimumWidth(150)
+        self.setMaximumWidth(200)
         self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         
         # 設定樣式
@@ -383,27 +383,62 @@ class ModernBlackjackCounterApp(QMainWindow):
         top_widget.setLayout(top_layout)
         game_layout.addWidget(top_widget)
         
-        # 下半部分：玩家手牌（水平佈局）
+        # 下半部分：玩家手牌（可滾動網格佈局）
         hands_group = QGroupBox("玩家手牌")
         hands_group_layout = QVBoxLayout()
         
+        # 創建滾動區域
+        self.hands_scroll_area = QScrollArea()
+        self.hands_scroll_area.setWidgetResizable(True)
+        self.hands_scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.hands_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.hands_scroll_area.setMinimumHeight(250)
+        self.hands_scroll_area.setStyleSheet("""
+            QScrollArea {
+                background-color: #1e1e1e;
+                border: 1px solid #444;
+                border-radius: 5px;
+            }
+            QScrollBar:vertical {
+                background-color: #2b2b2b;
+                width: 12px;
+                border-radius: 6px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #555;
+                border-radius: 6px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #666;
+            }
+            QScrollBar:horizontal {
+                background-color: #2b2b2b;
+                height: 12px;
+                border-radius: 6px;
+            }
+            QScrollBar::handle:horizontal {
+                background-color: #555;
+                border-radius: 6px;
+                min-width: 20px;
+            }
+            QScrollBar::handle:horizontal:hover {
+                background-color: #666;
+            }
+        """)
+        
         # 手牌容器
         self.hands_container = QWidget()
-        self.hands_layout = QHBoxLayout()
-        self.hands_layout.setSpacing(15)
+        self.hands_container.setStyleSheet("background-color: #1e1e1e;")
+        self.hands_layout = QGridLayout()
+        self.hands_layout.setSpacing(10)
         self.hands_layout.setContentsMargins(10, 10, 10, 10)
         self.hands_container.setLayout(self.hands_layout)
         
-        # 添加彈性空間確保手牌置中
-        container_layout = QHBoxLayout()
-        container_layout.addStretch()
-        container_layout.addWidget(self.hands_container)
-        container_layout.addStretch()
+        # 設置滾動區域的內容
+        self.hands_scroll_area.setWidget(self.hands_container)
         
-        container_widget = QWidget()
-        container_widget.setLayout(container_layout)
-        
-        hands_group_layout.addWidget(container_widget)
+        hands_group_layout.addWidget(self.hands_scroll_area)
         hands_group.setLayout(hands_group_layout)
         game_layout.addWidget(hands_group)
         
@@ -686,11 +721,26 @@ class ModernBlackjackCounterApp(QMainWindow):
             frame.deleteLater()
         self.hand_frames.clear()
         
-        # 清除佈局中的所有項目（包括彈性空間）
+        # 清除佈局中的所有項目
         while self.hands_layout.count():
             item = self.hands_layout.takeAt(0)
             if item:
                 item = None
+        
+        # 計算網格配置
+        num_hands = len(self.game_state.player_hands)
+        if num_hands <= 4:
+            columns = num_hands
+            rows = 1
+        elif num_hands <= 8:
+            columns = 4
+            rows = 2
+        elif num_hands <= 16:
+            columns = 4
+            rows = 4
+        else:
+            columns = 4
+            rows = 8
         
         # 為每個手牌建立顯示
         for idx, hand in enumerate(self.game_state.player_hands):
@@ -707,7 +757,11 @@ class ModernBlackjackCounterApp(QMainWindow):
                 action_label.setStyleSheet(f"color: {self.get_action_color(action)}; font-size: 14px; font-weight: bold;")
                 hand_frame.layout().addWidget(action_label)
             
-            self.hands_layout.addWidget(hand_frame)
+            # 計算網格位置
+            row = idx // columns
+            col = idx % columns
+            
+            self.hands_layout.addWidget(hand_frame, row, col)
             self.hand_frames.append(hand_frame)
     
     def update_decision_display(self):

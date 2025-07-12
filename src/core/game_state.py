@@ -12,7 +12,7 @@ class GameState:
         self.current_hand_index: int = 0  # 當前活動手牌索引
         self.dealer_cards: List[str] = []  # 莊家所有牌
         self.is_new_hand: bool = True
-        self.max_hands: int = 4  # 最多允許4個分牌手
+        self.max_hands: int = 32  # 最多允許32個分牌手（8副牌理論最大值）
 
     @property
     def current_hand(self) -> Hand:
