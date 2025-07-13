@@ -857,9 +857,10 @@ class ModernBlackjackCounterApp(QMainWindow):
 
         layout.addLayout(card_input_layout)
 
-        # 選項區域 - 投降允許checkbox
-        options_layout = QHBoxLayout()
+        # 動作按鈕
+        buttons_layout = QHBoxLayout()
 
+        # 投降允許checkbox (移到按鈕列)
         self.surrender_checkbox = QCheckBox("允許投降")
         self.surrender_checkbox.setChecked(True)  # 預設啟用投降
         self.surrender_checkbox.setStyleSheet(
@@ -886,13 +887,7 @@ class ModernBlackjackCounterApp(QMainWindow):
         """
         )
         self.surrender_checkbox.stateChanged.connect(self.on_surrender_toggle)
-        options_layout.addWidget(self.surrender_checkbox)
-        options_layout.addStretch()
-
-        layout.addLayout(options_layout)
-
-        # 動作按鈕
-        buttons_layout = QHBoxLayout()
+        buttons_layout.addWidget(self.surrender_checkbox)
 
         buttons_layout.addStretch()
 
