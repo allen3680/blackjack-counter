@@ -345,9 +345,9 @@ class NewShoeDialog(QDialog):
 class ModernBlackjackCounterApp(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("BlackJack Counter Pro")
-        self.setGeometry(100, 100, 800, 650)
-        self.setMinimumHeight(650)
+        self.setWindowTitle("BlackJack Counter")
+        self.setGeometry(100, 100, 800, 700)
+        self.setMinimumHeight(700)
 
         # 設定應用程式圖標
         self.setWindowIcon(self.create_blackjack_icon())
