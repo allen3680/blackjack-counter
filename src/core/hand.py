@@ -84,10 +84,6 @@ class Hand:
         ):
             return False
 
-        # 如果是分A後的手牌，通常不允許再分牌
-        if self.split_aces:
-            return False
-
         return True
 
     def double_down(self) -> None:
