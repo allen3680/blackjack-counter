@@ -143,7 +143,7 @@ class HandFrame(QGroupBox):
             value_style = "color: #27ae60; font-size: 14px; font-weight: bold;"
         elif hand.status == HandStatus.BUSTED:
             value_text = f"爆牌! ({value})"
-            value_style = "color: #e74c3c; font-size: 14px; font-weight: bold;"
+            value_style = "color: #888888; font-size: 14px; font-weight: bold;"
 
         value_label = QLabel(value_text)
         value_label.setStyleSheet(value_style)
@@ -1242,7 +1242,7 @@ class ModernBlackjackCounterApp(QMainWindow):
             "加倍": "#f39c12",  # 橙
             "分牌": "#9b59b6",  # 紫
             "投降": "#e74c3c",  # 紅
-            "爆牌": "#c0392b",  # 深紅
+            "爆牌": "#888888",  # 灰色
         }
         return color_map.get(action, "#888")
 
