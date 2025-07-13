@@ -634,6 +634,24 @@ class ModernBlackjackCounterApp(QMainWindow):
         """
         )
         decision_layout.addWidget(self.decision_label)
+        
+        # 保險建議標籤
+        self.insurance_label = QLabel("")
+        self.insurance_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.insurance_label.setStyleSheet(
+            """
+            QLabel {
+                font-size: 16px;
+                font-weight: bold;
+                background-color: #2b2b2b;
+                border-radius: 8px;
+                padding: 4px;
+                margin-top: 5px;
+            }
+        """
+        )
+        self.insurance_label.setVisible(False)  # 預設隱藏
+        decision_layout.addWidget(self.insurance_label)
 
         decision_group.setLayout(decision_layout)
         top_layout.addWidget(decision_group)
@@ -1034,7 +1052,8 @@ class ModernBlackjackCounterApp(QMainWindow):
 
             # 如果是活動手牌，顯示決策
             if hand.status == HandStatus.ACTIVE and self.game_state.dealer_card:
-                action, _ = self.strategy.get_decision(hand.cards, self.game_state.dealer_card)
+                true_count = self.counter.get_true_count()
+                action, _ = self.strategy.get_decision(hand.cards, self.game_state.dealer_card, true_count)
                 action_label = QLabel(f"建議: {action}")
                 action_label.setStyleSheet(
                     f"color: {self.get_action_color(action)}; font-size: 12px; font-weight: bold;"
@@ -1055,8 +1074,10 @@ class ModernBlackjackCounterApp(QMainWindow):
         current_hand = self.game_state.current_hand
 
         if current_hand.cards and self.game_state.dealer_card:
+            # 取得當前的真實計數
+            true_count = self.counter.get_true_count()
             action, explanation = self.strategy.get_decision(
-                current_hand.cards, self.game_state.dealer_card
+                current_hand.cards, self.game_state.dealer_card, true_count
             )
             self.decision_label.setText(action)
             self.decision_label.setStyleSheet(
@@ -1072,6 +1093,45 @@ class ModernBlackjackCounterApp(QMainWindow):
                 }}
             """
             )
+            
+            # 檢查是否需要顯示保險建議（只在莊家第一張牌是A且只有一張牌時）
+            if self.game_state.dealer_card == "A" and len(self.game_state.dealer_cards) == 1:
+                should_insure = self.strategy.should_take_insurance(true_count)
+                if should_insure:
+                    self.insurance_label.setText("建議買保險 (計數 ≥ 3)")
+                    self.insurance_label.setStyleSheet(
+                        """
+                        QLabel {
+                            font-size: 16px;
+                            font-weight: bold;
+                            color: #27ae60;
+                            background-color: #2b2b2b;
+                            border: 2px solid #27ae60;
+                            border-radius: 8px;
+                            padding: 4px;
+                            margin-top: 5px;
+                        }
+                    """
+                    )
+                else:
+                    self.insurance_label.setText("不建議買保險 (計數 < 3)")
+                    self.insurance_label.setStyleSheet(
+                        """
+                        QLabel {
+                            font-size: 16px;
+                            font-weight: bold;
+                            color: #e74c3c;
+                            background-color: #2b2b2b;
+                            border: 2px solid #e74c3c;
+                            border-radius: 8px;
+                            padding: 4px;
+                            margin-top: 5px;
+                        }
+                    """
+                    )
+                self.insurance_label.setVisible(True)
+            else:
+                self.insurance_label.setVisible(False)
         else:
             self.decision_label.setText("請加入手牌")
             self.decision_label.setStyleSheet(
@@ -1087,6 +1147,7 @@ class ModernBlackjackCounterApp(QMainWindow):
                 }
             """
             )
+            self.insurance_label.setVisible(False)
 
     def update_button_states(self) -> None:
         """更新按鈕狀態"""

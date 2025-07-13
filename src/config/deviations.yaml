@@ -1,0 +1,164 @@
+# Wong Halves 計數系統策略偏移配置
+# 根據真實計數調整基本策略的決策
+
+deviations:
+  # Illustrious 18 - 最重要的18個策略偏移
+  # 格式: 手牌類型-手牌點數-莊家牌: {基本動作, 偏移動作, 計數門檻}
+  
+  # 保險偏移
+  insurance:
+    description: "真實計數 >= 3 時買保險"
+    true_count_threshold: 3.0
+    
+  # 硬牌偏移 (Hard Hands)
+  hard_hands:
+    # 16 vs 10 - 基本策略要牌，計數 >= 0 時停牌
+    "16-10":
+      basic_action: "H"  # Hit
+      deviation_action: "S"  # Stand
+      true_count_threshold: 0.0
+      description: "16點對莊家10，計數 >= 0 時停牌"
+      
+    # 16 vs 9 - 基本策略要牌，計數 >= 4 時停牌
+    "16-9":
+      basic_action: "H"
+      deviation_action: "S"
+      true_count_threshold: 4.0
+      description: "16點對莊家9，計數 >= 4 時停牌"
+      
+    # 15 vs 10 - 基本策略要牌，計數 >= 4 時停牌
+    "15-10":
+      basic_action: "H"
+      deviation_action: "S"
+      true_count_threshold: 4.0
+      description: "15點對莊家10，計數 >= 4 時停牌"
+      
+    # 13 vs 2 - 基本策略停牌，計數 <= -1 時要牌
+    "13-2":
+      basic_action: "S"
+      deviation_action: "H"
+      true_count_threshold: -1.0
+      description: "13點對莊家2，計數 <= -1 時要牌"
+      
+    # 12 vs 2 - 基本策略要牌，計數 >= 3 時停牌
+    "12-2":
+      basic_action: "H"
+      deviation_action: "S"
+      true_count_threshold: 3.0
+      description: "12點對莊家2，計數 >= 3 時停牌"
+      
+    # 12 vs 3 - 基本策略要牌，計數 >= 2 時停牌
+    "12-3":
+      basic_action: "H"
+      deviation_action: "S"
+      true_count_threshold: 2.0
+      description: "12點對莊家3，計數 >= 2 時停牌"
+      
+    # 12 vs 4 - 基本策略停牌，計數 <= 0 時要牌
+    "12-4":
+      basic_action: "S"
+      deviation_action: "H"
+      true_count_threshold: 0.0
+      description: "12點對莊家4，計數 <= 0 時要牌"
+      
+    # 11 vs A - 基本策略要牌，計數 >= 1 時加倍
+    "11-A":
+      basic_action: "H"
+      deviation_action: "D"
+      true_count_threshold: 1.0
+      description: "11點對莊家A，計數 >= 1 時加倍"
+      
+    # 10 vs 10 - 基本策略要牌，計數 >= 4 時加倍
+    "10-10":
+      basic_action: "H"
+      deviation_action: "D"
+      true_count_threshold: 4.0
+      description: "10點對莊家10，計數 >= 4 時加倍"
+      
+    # 10 vs A - 基本策略要牌，計數 >= 4 時加倍
+    "10-A":
+      basic_action: "H"
+      deviation_action: "D"
+      true_count_threshold: 4.0
+      description: "10點對莊家A，計數 >= 4 時加倍"
+      
+    # 9 vs 2 - 基本策略要牌，計數 >= 1 時加倍
+    "9-2":
+      basic_action: "H"
+      deviation_action: "D"
+      true_count_threshold: 1.0
+      description: "9點對莊家2，計數 >= 1 時加倍"
+      
+    # 9 vs 7 - 基本策略要牌，計數 >= 3 時加倍
+    "9-7":
+      basic_action: "H"
+      deviation_action: "D"
+      true_count_threshold: 3.0
+      description: "9點對莊家7，計數 >= 3 時加倍"
+
+    # 8 vs 6 - 基本策略要牌，計數 >= 2 時加倍
+    "8-6":
+      basic_action: "H"
+      deviation_action: "D"
+      true_count_threshold: 2.0
+      description: "8點對莊家6，計數 >= 2 時加倍"
+
+  # 對子偏移 (Pair Splits)
+  pairs:
+    # 10,10 vs 4 - 基本策略不分牌，計數 >= 6 時分牌
+    "10,10-4":
+      basic_action: "N"  # No split (Stand)
+      deviation_action: "Y"  # Split
+      true_count_threshold: 6.0
+      description: "一對10對莊家4，計數 >= 6 時分牌"
+
+    # 10,10 vs 5 - 基本策略不分牌，計數 >= 5 時分牌
+    "10,10-5":
+      basic_action: "N"  # No split (Stand)
+      deviation_action: "Y"  # Split
+      true_count_threshold: 5.0
+      description: "一對10對莊家5，計數 >= 5 時分牌"
+      
+    # 10,10 vs 6 - 基本策略不分牌，計數 >= 4 時分牌
+    "10,10-6":
+      basic_action: "N"
+      deviation_action: "Y"
+      true_count_threshold: 4.0
+      description: "一對10對莊家6，計數 >= 4 時分牌"
+      
+  # Fab 4 - 投降偏移 (Surrender Deviations)
+  surrender:
+    # 14 vs 10 - 計數 >= 3 時投降
+    "14-10":
+      basic_action: "H"
+      deviation_action: "R"  # Surrender
+      true_count_threshold: 3.0
+      description: "14點對莊家10，計數 >= 3 時投降"
+      
+    # 15 vs 10 - 計數 >= 0 時投降
+    "15-10":
+      basic_action: "H"
+      deviation_action: "R"
+      true_count_threshold: 0.0
+      description: "15點對莊家10，計數 >= 0 時投降"
+      
+    # 15 vs A - 計數 >= 2 時投降
+    "15-A":
+      basic_action: "H"
+      deviation_action: "R"
+      true_count_threshold: 2.0
+      description: "15點對莊家A，計數 >= 2 時投降"
+      
+    # 15 vs 9 - 計數 >= 2 時投降
+    "15-9":
+      basic_action: "H"
+      deviation_action: "R"
+      true_count_threshold: 2.0
+      description: "15點對莊家9，計數 >= 2 時投降"
+
+# 偏移優先順序說明
+priority_notes:
+  - "投降偏移優先於其他偏移"
+  - "保險決策獨立於其他決策"
+  - "偏移僅在真實計數達到門檻時應用"
+  - "多張牌的手牌可能無法加倍，此時改為要牌"
