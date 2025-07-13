@@ -36,11 +36,9 @@ class Hand:
         """新增一張牌到手牌"""
         self.cards.append(card)
 
-        # 檢查是否爆牌
+        # 檢查是否為21點
         value, _ = self.calculate_value()
-        if value > 21:
-            self.status = HandStatus.BUSTED
-        elif value == 21 and len(self.cards) == 2 and not self.is_split_hand:
+        if value == 21 and len(self.cards) == 2 and not self.is_split_hand:
             # 只有非分牌手才能算作blackjack
             self.status = HandStatus.BLACKJACK
 
@@ -112,9 +110,9 @@ class Hand:
         # 重新計算狀態
         if self.cards:
             value, _ = self.calculate_value()
-            # 如果之前是爆牌或21點，可能需要恢復為活動狀態
-            if self.status in [HandStatus.BUSTED, HandStatus.BLACKJACK]:
-                if value <= 21:
+            # 如果之前是21點，可能需要恢復為活動狀態
+            if self.status == HandStatus.BLACKJACK:
+                if value != 21 or len(self.cards) != 2:
                     self.status = HandStatus.ACTIVE
         else:
             # 如果沒有牌了，重置為活動狀態
