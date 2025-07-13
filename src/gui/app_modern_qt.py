@@ -5,49 +5,56 @@
 """
 
 import sys
+from typing import Any, Dict, List, Optional
+
 import yaml
-from typing import List, Optional, Dict, Any
+from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, Qt, pyqtSignal
+from PyQt6.QtGui import (
+    QColor,
+    QCursor,
+    QFont,
+    QIcon,
+    QMouseEvent,
+    QPainter,
+    QPixmap,
+)
 from PyQt6.QtWidgets import (
     QApplication,
-    QMainWindow,
-    QWidget,
-    QVBoxLayout,
+    QDialog,
+    QFrame,
+    QGraphicsOpacityEffect,
+    QGridLayout,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
-    QPushButton,
-    QGroupBox,
-    QGridLayout,
-    QScrollArea,
-    QFrame,
-    QTabWidget,
+    QMainWindow,
     QMessageBox,
+    QPushButton,
+    QScrollArea,
     QSizePolicy,
     QTextEdit,
-    QDialog,
-    QDialogButtonBox,
-    QGraphicsOpacityEffect,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, pyqtSignal, QRect
-from PyQt6.QtGui import QFont, QPalette, QColor, QLinearGradient, QCursor, QMouseEvent, QPixmap, QPainter, QIcon
 
-from src.core import BasicStrategy, GameState, WongHalvesCounter, HandStatus
 from src.config import SHORTCUTS_CONFIG
+from src.core import BasicStrategy, GameState, HandStatus, WongHalvesCounter
 
 
 class ClickableGroupBox(QGroupBox):
     """可點擊的群組框"""
-    
+
     # 定義點擊信號
     clicked = pyqtSignal()
-    
-    def __init__(self, title: str, parent=None):
+
+    def __init__(self, title: str, parent: Optional[QWidget] = None) -> None:
         super().__init__(title, parent)
         # 設定游標樣式（可點擊）
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-    
-    def mousePressEvent(self, event: QMouseEvent) -> None:
+
+    def mousePressEvent(self, event: Optional[QMouseEvent]) -> None:
         """處理滑鼠點擊事件"""
-        if event.button() == Qt.MouseButton.LeftButton:
+        if event and event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit()
         super().mousePressEvent(event)
 
@@ -58,7 +65,9 @@ class HandFrame(QGroupBox):
     # 定義點擊信號
     clicked = pyqtSignal(int)
 
-    def __init__(self, index: int, hand, is_active: bool, parent=None):
+    def __init__(
+        self, index: int, hand: Any, is_active: bool, parent: Optional[QWidget] = None
+    ) -> None:
         title = f"手牌 {index + 1}"
         if hand.is_split_hand:
             title += " (分牌)"
@@ -145,15 +154,15 @@ class HandFrame(QGroupBox):
         if hand.status == HandStatus.ACTIVE:
             self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
 
-    def mousePressEvent(self, event: QMouseEvent) -> None:
+    def mousePressEvent(self, event: Optional[QMouseEvent]) -> None:
         """處理滑鼠點擊事件"""
-        if event.button() == Qt.MouseButton.LeftButton:
+        if event and event.button() == Qt.MouseButton.LeftButton:
             # 只有活動手牌可以被選擇
             if self.hand.status == HandStatus.ACTIVE:
                 self.clicked.emit(self.index)
         super().mousePressEvent(event)
 
-    def enterEvent(self, event) -> None:
+    def enterEvent(self, event: Any) -> None:
         """滑鼠進入時的效果"""
         if self.hand.status == HandStatus.ACTIVE and not self.is_active:
             self.setStyleSheet(
@@ -174,7 +183,7 @@ class HandFrame(QGroupBox):
             )
         super().enterEvent(event)
 
-    def leaveEvent(self, event) -> None:
+    def leaveEvent(self, event: Any) -> None:
         """滑鼠離開時恢復原樣"""
         if not self.is_active and self.hand.status == HandStatus.ACTIVE:
             self.setStyleSheet(
@@ -199,61 +208,68 @@ class HandFrame(QGroupBox):
 class NewShoeDialog(QDialog):
     """自定義新牌靴確認對話框"""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("新牌靴確認")
         self.setModal(True)
         self.setFixedSize(420, 220)
-        
+
         # 設定深色主題樣式
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
             QDialog {
                 background-color: #1e1e1e;
                 border: 2px solid #444;
                 border-radius: 15px;
             }
-        """)
-        
+        """
+        )
+
         # 移除標題欄
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
-        
+
         # 主佈局
         layout = QVBoxLayout()
         layout.setSpacing(20)
         layout.setContentsMargins(30, 25, 30, 20)
-        
+
         # 標題
         title_label = QLabel("開始新牌靴？")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title_label.setStyleSheet("""
+        title_label.setStyleSheet(
+            """
             QLabel {
                 color: #f39c12;
                 font-size: 20px;
                 font-weight: bold;
             }
-        """)
+        """
+        )
         layout.addWidget(title_label)
-        
+
         # 警告文字
         warning_label = QLabel("這將重置所有計數並清除手牌")
         warning_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        warning_label.setStyleSheet("""
+        warning_label.setStyleSheet(
+            """
             QLabel {
                 color: #e74c3c;
                 font-size: 14px;
                 padding: 10px;
             }
-        """)
+        """
+        )
         layout.addWidget(warning_label)
-        
+
         # 按鈕區域
         button_layout = QHBoxLayout()
         button_layout.setSpacing(15)
-        
+
         # 取消按鈕
         cancel_button = QPushButton("取消")
         cancel_button.setFixedSize(120, 40)
-        cancel_button.setStyleSheet("""
+        cancel_button.setStyleSheet(
+            """
             QPushButton {
                 background-color: #3a3a3a;
                 color: white;
@@ -269,14 +285,16 @@ class NewShoeDialog(QDialog):
             QPushButton:pressed {
                 background-color: #2a2a2a;
             }
-        """)
+        """
+        )
         cancel_button.clicked.connect(self.reject)
         button_layout.addWidget(cancel_button)
-        
+
         # 確認按鈕
         confirm_button = QPushButton("開始新牌靴")
         confirm_button.setFixedSize(120, 40)
-        confirm_button.setStyleSheet("""
+        confirm_button.setStyleSheet(
+            """
             QPushButton {
                 background-color: #f39c12;
                 color: white;
@@ -291,43 +309,45 @@ class NewShoeDialog(QDialog):
             QPushButton:pressed {
                 background-color: #d68910;
             }
-        """)
+        """
+        )
         confirm_button.clicked.connect(self.accept)
         button_layout.addWidget(confirm_button)
-        
+
         layout.addLayout(button_layout)
         self.setLayout(layout)
-        
+
         # 淡入動畫
         self.opacity_effect = QGraphicsOpacityEffect()
         self.setGraphicsEffect(self.opacity_effect)
-        
+
         self.fade_in_animation = QPropertyAnimation(self.opacity_effect, b"opacity")
         self.fade_in_animation.setDuration(200)
         self.fade_in_animation.setStartValue(0.0)
         self.fade_in_animation.setEndValue(1.0)
         self.fade_in_animation.setEasingCurve(QEasingCurve.Type.InOutQuad)
-        
-    def showEvent(self, event):
+
+    def showEvent(self, event: Any) -> None:
         """顯示時播放淡入動畫"""
         super().showEvent(event)
         self.fade_in_animation.start()
-        
+
         # 將對話框置中於父視窗
-        if self.parent():
-            parent_rect = self.parent().geometry()
+        parent = self.parent()
+        if parent and hasattr(parent, "geometry"):
+            parent_rect = parent.geometry()
             x = parent_rect.center().x() - self.width() // 2
             y = parent_rect.center().y() - self.height() // 2
             self.move(x, y)
 
 
 class ModernBlackjackCounterApp(QMainWindow):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("BlackJack Counter Pro")
         self.setGeometry(100, 100, 800, 650)
         self.setMinimumHeight(650)
-        
+
         # 設定應用程式圖標
         self.setWindowIcon(self.create_blackjack_icon())
 
@@ -343,12 +363,12 @@ class ModernBlackjackCounterApp(QMainWindow):
         self.hand_frames: List[HandFrame] = []
         self.last_card_action: str = "player"  # 追蹤最後的牌操作: "player" 或 "dealer"
         self.other_player_cards: List[str] = []  # 追蹤其他玩家的牌
-        
+
         # 控制面板群組參考
         self.player_group: Optional[ClickableGroupBox] = None
         self.dealer_group: Optional[ClickableGroupBox] = None
         self.others_group: Optional[ClickableGroupBox] = None
-        
+
         # 面板切換追蹤
         self.panel_order = ["player", "dealer", "other"]
         self.current_panel_index = 0  # 從玩家手牌開始
@@ -418,15 +438,15 @@ class ModernBlackjackCounterApp(QMainWindow):
         # 創建 64x64 的圖標
         pixmap = QPixmap(64, 64)
         pixmap.fill(Qt.GlobalColor.transparent)
-        
+
         painter = QPainter(pixmap)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        
+
         # 繪製背景圓圈
         painter.setBrush(QColor("#2c3e50"))
         painter.setPen(Qt.PenStyle.NoPen)
         painter.drawEllipse(4, 4, 56, 56)
-        
+
         # 繪製撲克牌符號 - 黑桃
         painter.setBrush(QColor("#ecf0f1"))
         # 黑桃形狀
@@ -439,25 +459,26 @@ class ModernBlackjackCounterApp(QMainWindow):
             (42, 30),  # 右邊
             (32, 15),  # 回到頂點
         ]
-        
+
         for i in range(len(spade_path) - 1):
-            painter.drawLine(spade_path[i][0], spade_path[i][1], 
-                           spade_path[i+1][0], spade_path[i+1][1])
-        
+            painter.drawLine(
+                spade_path[i][0], spade_path[i][1], spade_path[i + 1][0], spade_path[i + 1][1]
+            )
+
         # 繪製黑桃底部
         painter.drawLine(28, 35, 32, 45)  # 左側到中心
         painter.drawLine(36, 35, 32, 45)  # 右側到中心
-        
+
         # 繪製 "21" 文字
         painter.setFont(QFont("Arial", 16, QFont.Weight.Bold))
         painter.setPen(QColor("#e74c3c"))
         painter.drawText(20, 50, "21")
-        
+
         painter.end()
-        
+
         return QIcon(pixmap)
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """設定使用者介面"""
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -845,7 +866,9 @@ class ModernBlackjackCounterApp(QMainWindow):
         panel.setLayout(layout)
         return panel
 
-    def create_card_buttons(self, category: str, callback, card_type: str = None) -> QWidget:
+    def create_card_buttons(
+        self, category: str, callback: Any, card_type: Optional[str] = None
+    ) -> QWidget:
         """建立牌按鈕網格"""
         widget = QWidget()
         grid = QGridLayout()
@@ -911,7 +934,7 @@ class ModernBlackjackCounterApp(QMainWindow):
         widget.setLayout(grid)
         return widget
 
-    def update_display(self):
+    def update_display(self) -> None:
         """更新整個顯示"""
         self.update_counts()
         self.update_dealer_display()
@@ -920,7 +943,7 @@ class ModernBlackjackCounterApp(QMainWindow):
         self.update_button_states()
         self.update_other_cards_display()
 
-    def update_other_cards_display(self):
+    def update_other_cards_display(self) -> None:
         """更新其他玩家牌顯示"""
         if not self.other_player_cards:
             self.other_cards_text.clear()
@@ -937,7 +960,7 @@ class ModernBlackjackCounterApp(QMainWindow):
         cursor.movePosition(cursor.MoveOperation.Start)
         self.other_cards_text.setTextCursor(cursor)
 
-    def update_counts(self):
+    def update_counts(self) -> None:
         """更新計數顯示"""
         running = self.counter.running_count
         true = self.counter.get_true_count()
@@ -963,7 +986,7 @@ class ModernBlackjackCounterApp(QMainWindow):
         # 只對真實計數應用顏色
         self.true_count_value.setStyleSheet(f"color: {color}; font-size: 12px; font-weight: bold;")
 
-    def update_dealer_display(self):
+    def update_dealer_display(self) -> None:
         """更新莊家牌顯示"""
         if not self.game_state.dealer_cards:
             self.dealer_label.setText("無牌")
@@ -976,7 +999,7 @@ class ModernBlackjackCounterApp(QMainWindow):
             other_cards = ", ".join(self.game_state.dealer_cards[1:])
             self.dealer_label.setText(f"底牌: {upcard} | 其他: {other_cards}")
 
-    def update_hands_display(self):
+    def update_hands_display(self) -> None:
         """更新手牌顯示"""
         # 清除舊的手牌框架
         for frame in self.hand_frames:
@@ -994,16 +1017,12 @@ class ModernBlackjackCounterApp(QMainWindow):
         num_hands = len(self.game_state.player_hands)
         if num_hands <= 4:
             columns = num_hands
-            rows = 1
         elif num_hands <= 8:
             columns = 4
-            rows = 2
         elif num_hands <= 16:
             columns = 4
-            rows = 4
         else:
             columns = 4
-            rows = 8
 
         # 為每個手牌建立顯示
         for idx, hand in enumerate(self.game_state.player_hands):
@@ -1020,7 +1039,9 @@ class ModernBlackjackCounterApp(QMainWindow):
                 action_label.setStyleSheet(
                     f"color: {self.get_action_color(action)}; font-size: 12px; font-weight: bold;"
                 )
-                hand_frame.layout().addWidget(action_label)
+                frame_layout = hand_frame.layout()
+                if frame_layout:
+                    frame_layout.addWidget(action_label)
 
             # 計算網格位置
             row = idx // columns
@@ -1029,7 +1050,7 @@ class ModernBlackjackCounterApp(QMainWindow):
             self.hands_layout.addWidget(hand_frame, row, col)
             self.hand_frames.append(hand_frame)
 
-    def update_decision_display(self):
+    def update_decision_display(self) -> None:
         """更新決策顯示"""
         current_hand = self.game_state.current_hand
 
@@ -1067,11 +1088,11 @@ class ModernBlackjackCounterApp(QMainWindow):
             """
             )
 
-    def update_button_states(self):
+    def update_button_states(self) -> None:
         """更新按鈕狀態"""
         self.split_button.setEnabled(self.game_state.can_split_current_hand())
-    
-    def update_panel_selection(self):
+
+    def update_panel_selection(self) -> None:
         """更新控制面板選中狀態"""
         # 定義選中和未選中的樣式
         selected_style = """
@@ -1088,7 +1109,7 @@ class ModernBlackjackCounterApp(QMainWindow):
                 left: 10px;
             }
         """
-        
+
         unselected_style = """
             QGroupBox {
                 font-weight: bold;
@@ -1103,18 +1124,18 @@ class ModernBlackjackCounterApp(QMainWindow):
                 left: 10px;
             }
         """
-        
+
         # 根據 last_card_action 更新樣式
         if self.player_group:
             self.player_group.setStyleSheet(
                 selected_style if self.last_card_action == "player" else unselected_style
             )
-        
+
         if self.dealer_group:
             self.dealer_group.setStyleSheet(
                 selected_style if self.last_card_action == "dealer" else unselected_style
             )
-        
+
         if self.others_group:
             self.others_group.setStyleSheet(
                 selected_style if self.last_card_action == "other" else unselected_style
@@ -1133,7 +1154,7 @@ class ModernBlackjackCounterApp(QMainWindow):
         return color_map.get(action, "#888")
 
     # 事件處理方法
-    def add_player_card(self, card: str):
+    def add_player_card(self, card: str) -> None:
         """新增玩家手牌"""
         self.counter.add_card(card)
         self.game_state.add_player_card(card)
@@ -1141,7 +1162,7 @@ class ModernBlackjackCounterApp(QMainWindow):
         self.update_display()
         self.update_panel_selection()
 
-    def set_dealer_card(self, card: str):
+    def set_dealer_card(self, card: str) -> None:
         """新增莊家牌"""
         self.counter.add_card(card)
         self.game_state.add_dealer_card(card)
@@ -1149,7 +1170,7 @@ class ModernBlackjackCounterApp(QMainWindow):
         self.update_display()
         self.update_panel_selection()
 
-    def add_other_card(self, card: str):
+    def add_other_card(self, card: str) -> None:
         """新增其他玩家的牌"""
         self.counter.add_card(card)
         self.other_player_cards.append(card)
@@ -1157,7 +1178,7 @@ class ModernBlackjackCounterApp(QMainWindow):
         self.update_display()
         self.update_panel_selection()
 
-    def add_card_smart(self, card: str):
+    def add_card_smart(self, card: str) -> None:
         """根據最後操作位置智慧新增卡牌"""
         if self.last_card_action == "player":
             self.add_player_card(card)
@@ -1166,13 +1187,13 @@ class ModernBlackjackCounterApp(QMainWindow):
         elif self.last_card_action == "other":
             self.add_other_card(card)
 
-    def clear_hand(self):
+    def clear_hand(self) -> None:
         """清除手牌"""
         self.game_state.clear_hand()
         self.other_player_cards.clear()
         self.update_display()
 
-    def remove_last_card(self):
+    def remove_last_card(self) -> None:
         """移除最後一張牌"""
         # 根據最後的操作決定移除哪邊的牌
         if self.last_card_action == "player":
@@ -1191,7 +1212,7 @@ class ModernBlackjackCounterApp(QMainWindow):
                 self.counter.remove_card(removed_card)
                 self.update_display()
 
-    def remove_specific_card(self, card_type: str):
+    def remove_specific_card(self, card_type: str) -> None:
         """移除特定類型的牌"""
         if card_type == "player":
             removed_card = self.game_state.remove_last_card_from_current_hand()
@@ -1209,52 +1230,52 @@ class ModernBlackjackCounterApp(QMainWindow):
                 self.counter.remove_card(removed_card)
                 self.update_display()
 
-    def new_shoe(self):
+    def new_shoe(self) -> None:
         """開始新牌靴"""
         # 顯示自定義對話框
         dialog = NewShoeDialog(self)
-        
+
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self.counter.new_shoe()
             self.game_state.clear_hand()
             self.other_player_cards.clear()
             self.update_display()
 
-    def stand_hand(self):
+    def stand_hand(self) -> None:
         """當前手牌停牌"""
         self.game_state.stand_current_hand()
         self.update_display()
 
-    def split_hand(self):
+    def split_hand(self) -> None:
         """分牌"""
         if self.game_state.split_current_hand():
             self.update_display()
         else:
             QMessageBox.warning(self, "分牌失敗", "無法分牌")
 
-    def on_hand_selected(self, index: int):
+    def on_hand_selected(self, index: int) -> None:
         """處理手牌選擇事件"""
         if self.game_state.set_current_hand_index(index):
             self.update_display()
-    
-    def on_panel_clicked(self, panel_type: str):
+
+    def on_panel_clicked(self, panel_type: str) -> None:
         """處理控制面板點擊事件"""
         self.last_card_action = panel_type
         # 同步更新當前面板索引
         if panel_type in self.panel_order:
             self.current_panel_index = self.panel_order.index(panel_type)
         self.update_panel_selection()
-    
-    def switch_to_next_panel(self):
+
+    def switch_to_next_panel(self) -> None:
         """切換到下一個面板"""
         self.current_panel_index = (self.current_panel_index + 1) % len(self.panel_order)
         self.on_panel_clicked(self.panel_order[self.current_panel_index])
-    
-    def switch_to_previous_panel(self):
+
+    def switch_to_previous_panel(self) -> None:
         """切換到上一個面板"""
         self.current_panel_index = (self.current_panel_index - 1) % len(self.panel_order)
         self.on_panel_clicked(self.panel_order[self.current_panel_index])
-    
+
     def focusNextPrevChild(self, next: bool) -> bool:
         """覆蓋焦點切換行為，將 Tab 鍵用於面板切換"""
         if next:
@@ -1268,7 +1289,10 @@ class ModernBlackjackCounterApp(QMainWindow):
         try:
             with open(SHORTCUTS_CONFIG, "r", encoding="utf-8") as f:
                 config = yaml.safe_load(f)
-                return config.get("shortcuts", {})
+                shortcuts = config.get("shortcuts", {})
+                if isinstance(shortcuts, dict):
+                    return shortcuts
+                return {}
         except FileNotFoundError:
             print(f"找不到快捷鍵設定檔：{SHORTCUTS_CONFIG}")
             return {}
@@ -1276,13 +1300,13 @@ class ModernBlackjackCounterApp(QMainWindow):
             print(f"快捷鍵設定檔格式錯誤：{e}")
             return {}
 
-    def get_qt_key(self, key_name: str):
+    def get_qt_key(self, key_name: str) -> Optional[Qt.Key]:
         """將按鍵名稱轉換為Qt按鍵常數"""
         # 處理組合鍵
         if "+" in key_name:
             # 暫時不處理組合鍵，留待未來擴充
             return None
-            
+
         # 按鍵映射表
         key_map = {
             "Backspace": Qt.Key.Key_Backspace,
@@ -1293,11 +1317,11 @@ class ModernBlackjackCounterApp(QMainWindow):
             "Escape": Qt.Key.Key_Escape,
             "Delete": Qt.Key.Key_Delete,
         }
-        
+
         # 檢查是否為特殊按鍵
         if key_name in key_map:
             return key_map[key_name]
-            
+
         # 處理單個字母或數字
         if len(key_name) == 1:
             if key_name.isalpha():
@@ -1305,27 +1329,29 @@ class ModernBlackjackCounterApp(QMainWindow):
                 return getattr(Qt.Key, f"Key_{key_name.upper()}", None)
             elif key_name.isdigit():
                 return getattr(Qt.Key, f"Key_{key_name}", None)
-                
+
         return None
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event: Any) -> None:
         """處理鍵盤事件"""
         pressed_key = event.key()
-        
+
         # 遍歷所有快捷鍵設定
         for action_name, shortcut_config in self.shortcuts.items():
             keys = shortcut_config.get("keys", [])
-            
+
             # 檢查按下的鍵是否匹配任何設定的按鍵
             for key_name in keys:
                 qt_key = self.get_qt_key(key_name)
                 if qt_key and pressed_key == qt_key:
                     # 檢查條件（如果有）
                     condition = shortcut_config.get("condition")
-                    
+
                     # 執行對應的動作
                     if action_name == "split_hand":
-                        if not condition or (condition == "split_enabled" and self.split_button.isEnabled()):
+                        if not condition or (
+                            condition == "split_enabled" and self.split_button.isEnabled()
+                        ):
                             self.split_hand()
                             return
                     elif action_name == "remove_card":
@@ -1347,14 +1373,14 @@ class ModernBlackjackCounterApp(QMainWindow):
                             "card_10": "10",
                             "card_jack": "J",
                             "card_queen": "Q",
-                            "card_king": "K"
+                            "card_king": "K",
                         }
                         if action_name in card_map:
                             self.add_card_smart(card_map[action_name])
                             return
 
 
-def main():
+def main() -> None:
     """主程式進入點"""
     app = QApplication(sys.argv)
 

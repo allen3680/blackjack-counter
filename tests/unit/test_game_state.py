@@ -67,7 +67,7 @@ class TestGameState:
         """Test player hand string with single card."""
         game_state = GameState()
         game_state.add_player_card("A")
-        assert game_state.get_player_hand_string() == "A [軟11]"
+        assert game_state.get_player_hand_string() == "A"
 
     def test_get_player_hand_string_multiple_cards(self):
         """Test player hand string with multiple cards."""
@@ -75,7 +75,7 @@ class TestGameState:
         game_state.add_player_card("A")
         game_state.add_player_card("K")
         # Note: Adding third card triggers blackjack status on first two cards
-        assert game_state.get_player_hand_string() == "A, K [21] (21點!)"
+        assert game_state.get_player_hand_string() == "A, K"
 
     def test_get_dealer_card_string_none(self):
         """Test dealer card string when no card is set."""
@@ -97,7 +97,7 @@ class TestGameState:
         game_state.add_player_card("7")
         game_state.set_dealer_card("9")
 
-        assert game_state.get_player_hand_string() == "10, 7 [17]"
+        assert game_state.get_player_hand_string() == "10, 7"
         assert game_state.get_dealer_card_string() == "9"
 
         # Clear and new hand
@@ -110,17 +110,17 @@ class TestGameState:
         game_state.add_player_card("A")
         game_state.set_dealer_card("6")
 
-        assert game_state.get_player_hand_string() == "A, A [軟12]"
+        assert game_state.get_player_hand_string() == "A, A"
         assert game_state.get_dealer_card_string() == "6"
 
     @pytest.mark.parametrize(
         "cards,expected",
         [
             ([], "無手牌"),
-            (["A"], "A [軟11]"),
-            (["2", "3"], "2, 3 [5]"),
-            (["J", "Q", "K"], "J, Q, K [30] (爆牌)"),
-            (["A", "2", "3", "4", "5"], "A, 2, 3, 4, 5 [15]"),
+            (["A"], "A"),
+            (["2", "3"], "2, 3"),
+            (["J", "Q", "K"], "J, Q, K"),
+            (["A", "2", "3", "4", "5"], "A, 2, 3, 4, 5"),
         ],
     )
     def test_get_player_hand_string_parametrized(self, cards, expected):

@@ -3,6 +3,7 @@
 """
 
 from typing import List, Optional
+
 from .hand import Hand, HandStatus
 
 
@@ -26,7 +27,7 @@ class GameState:
     def player_cards(self) -> List[str]:
         """向後相容：取得當前手牌的牌張"""
         return self.current_hand.cards
-    
+
     @property
     def dealer_card(self) -> Optional[str]:
         """向後相容：取得莊家明牌（第一張牌）"""
@@ -45,18 +46,18 @@ class GameState:
         """設定莊家的明牌（向後相容）"""
         self.dealer_cards = [card]
         self.is_new_hand = False
-    
+
     def add_dealer_card(self, card: str) -> None:
         """新增一張牌到莊家手牌"""
         self.dealer_cards.append(card)
         self.is_new_hand = False
-    
+
     def remove_last_dealer_card(self) -> Optional[str]:
         """移除莊家最後一張牌"""
         if self.dealer_cards:
             return self.dealer_cards.pop()
         return None
-    
+
     def get_dealer_upcard(self) -> Optional[str]:
         """取得莊家明牌（第一張牌）"""
         return self.dealer_cards[0] if self.dealer_cards else None
@@ -114,7 +115,7 @@ class GameState:
 
         # 插入新手牌到當前手牌後面
         self.player_hands.insert(self.current_hand_index + 1, new_hand)
-        
+
         # 確保索引仍然有效
         self.validate_current_hand_index()
 
@@ -165,10 +166,10 @@ class GameState:
     def set_current_hand_index(self, index: int) -> bool:
         """
         手動設定當前手牌索引
-        
+
         Args:
             index: 要設定的手牌索引
-            
+
         Returns:
             是否成功設定
         """
@@ -183,11 +184,11 @@ class GameState:
             self.current_hand_index = 0
         elif self.current_hand_index < 0:
             self.current_hand_index = 0
-    
+
     def remove_last_card_from_current_hand(self) -> Optional[str]:
         """
         從當前手牌移除最後一張牌
-        
+
         Returns:
             被移除的牌，如果沒有牌則返回 None
         """
@@ -196,10 +197,10 @@ class GameState:
     def get_hand_by_index(self, index: int) -> Optional[Hand]:
         """
         根據索引取得特定手牌
-        
+
         Args:
             index: 手牌索引
-            
+
         Returns:
             指定的手牌，如果索引無效則返回 None
         """

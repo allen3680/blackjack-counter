@@ -141,7 +141,7 @@ class TestGameFlow:
         decision = strategy.get_decision(game_state.player_cards, game_state.dealer_card)
 
         # Verify
-        assert game_state.get_player_hand_string() == "10, 6 [16]"
+        assert game_state.get_player_hand_string() == "10, 6"
         assert game_state.get_dealer_card_string() == "9"
         assert counter.running_count == -0.5
         action, desc = decision

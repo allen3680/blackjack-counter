@@ -1,10 +1,10 @@
 """Configuration module for blackjack counter."""
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Check if running in PyInstaller bundle
-if hasattr(sys, '_MEIPASS'):
+if hasattr(sys, "_MEIPASS"):
     # Running in a PyInstaller bundle
     CONFIG_DIR = Path(sys._MEIPASS) / "src" / "config"
 else:

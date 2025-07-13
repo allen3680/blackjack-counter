@@ -74,7 +74,7 @@ class WongHalvesCounter:
         if card in self.card_values:
             self.running_count += self.card_values[card]
             self.cards_seen += 1
-    
+
     def remove_card(self, card: str) -> None:
         """從計數中移除一張牌"""
         if card in self.card_values:

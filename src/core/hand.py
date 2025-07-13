@@ -100,19 +100,19 @@ class Hand:
         """停牌"""
         if self.status == HandStatus.ACTIVE:
             self.status = HandStatus.STANDING
-    
+
     def remove_last_card(self) -> Optional[str]:
         """
         移除最後一張牌
-        
+
         Returns:
             被移除的牌，如果沒有牌則返回 None
         """
         if not self.cards:
             return None
-        
+
         removed_card = self.cards.pop()
-        
+
         # 重新計算狀態
         if self.cards:
             value, _ = self.calculate_value()
@@ -123,7 +123,7 @@ class Hand:
         else:
             # 如果沒有牌了，重置為活動狀態
             self.status = HandStatus.ACTIVE
-        
+
         return removed_card
 
     def get_display_string(self) -> str:
