@@ -20,6 +20,7 @@ from PyQt6.QtGui import (
 )
 from PyQt6.QtWidgets import (
     QApplication,
+    QCheckBox,
     QDialog,
     QFrame,
     QGraphicsOpacityEffect,
@@ -856,6 +857,40 @@ class ModernBlackjackCounterApp(QMainWindow):
 
         layout.addLayout(card_input_layout)
 
+        # 選項區域 - 投降允許checkbox
+        options_layout = QHBoxLayout()
+
+        self.surrender_checkbox = QCheckBox("允許投降")
+        self.surrender_checkbox.setChecked(True)  # 預設啟用投降
+        self.surrender_checkbox.setStyleSheet(
+            """
+            QCheckBox {
+                color: #e0e0e0;
+                font-size: 14px;
+                padding: 5px;
+            }
+            QCheckBox::indicator {
+                width: 18px;
+                height: 18px;
+                border: 2px solid #888;
+                border-radius: 3px;
+                background-color: #2b2b2b;
+            }
+            QCheckBox::indicator:checked {
+                background-color: #27ae60;
+                border-color: #27ae60;
+            }
+            QCheckBox::indicator:hover {
+                border-color: #e0e0e0;
+            }
+        """
+        )
+        self.surrender_checkbox.stateChanged.connect(self.on_surrender_toggle)
+        options_layout.addWidget(self.surrender_checkbox)
+        options_layout.addStretch()
+
+        layout.addLayout(options_layout)
+
         # 動作按鈕
         buttons_layout = QHBoxLayout()
 
@@ -1328,6 +1363,14 @@ class ModernBlackjackCounterApp(QMainWindow):
         if panel_type in self.panel_order:
             self.current_panel_index = self.panel_order.index(panel_type)
         self.update_panel_selection()
+
+    def on_surrender_toggle(self, state: int) -> None:
+        """處理投降checkbox狀態改變"""
+        # Qt.CheckState.Checked.value = 2, Qt.CheckState.Unchecked.value = 0
+        allow_surrender = state == 2
+        self.strategy.set_allow_surrender(allow_surrender)
+        # 更新顯示以反映新的策略
+        self.update_decision_display()
 
     def switch_to_next_panel(self) -> None:
         """切換到下一個面板"""

@@ -16,6 +16,7 @@ class BasicStrategy:
         self,
         strategy_file: Optional[Union[str, Path]] = None,
         deviations_file: Optional[Union[str, Path]] = None,
+        allow_surrender: bool = True,
     ) -> None:
         """初始化策略引擎，從YAML檔案載入策略"""
         # 使用預設路徑或自定義路徑
@@ -47,6 +48,11 @@ class BasicStrategy:
 
         pair_config: Dict[str, Any] = config.get("pair_strategy", {})
         self.pair_strategy: Dict[str, List[str]] = pair_config.get("pairs", {})
+
+        # 載入投降策略表格
+        surrender_config: Dict[str, Any] = config.get("surrender_strategy", {})
+        self.surrender_strategy: Dict[int, List[str]] = surrender_config.get("hands", {})
+        self.allow_surrender = allow_surrender
 
         # 載入偏移策略
         if deviations_file is None:
@@ -103,6 +109,12 @@ class BasicStrategy:
             if pair not in self.pair_strategy:
                 raise ValueError(f"對子策略缺少 {pair} 的策略")
 
+        # 檢查投降策略（如果存在）
+        if self.surrender_strategy:
+            for value in range(5, 22):
+                if value not in self.surrender_strategy:
+                    raise ValueError(f"投降策略缺少點數 {value} 的策略")
+
     def get_card_value(self, card: str) -> int:
         """取得牌的數值"""
         if card in ["J", "Q", "K"]:
@@ -133,7 +145,39 @@ class BasicStrategy:
 
         return value, aces > 0 and value <= 21
 
-    def _check_deviation(
+    def _check_surrender_deviation(
+        self, hand_value: int, dealer_card: str, true_count: Optional[float]
+    ) -> Optional[Tuple[str, str]]:
+        """檢查投降偏移（優先級最高）"""
+        if true_count is None or not self.allow_surrender:
+            return None
+
+        surrender_key = f"{hand_value}-{dealer_card}"
+        if surrender_key in self.surrender_deviations:
+            deviation = self.surrender_deviations[surrender_key]
+            threshold = deviation["true_count_threshold"]
+            comparison_op = deviation.get("comparison_operator", ">=")
+
+            # 根據比較運算子判斷是否應用偏移
+            apply_deviation = False
+            if comparison_op == ">=":
+                apply_deviation = true_count >= threshold
+            elif comparison_op == "<=":
+                apply_deviation = true_count <= threshold
+
+            if apply_deviation:
+                if deviation["deviation_action"] == "R":
+                    # 偏移動作是投降
+                    action_info = self.action_codes.get("R", {})
+                    description = deviation.get("description", action_info.get("description", ""))
+                    return action_info.get("action", "投降"), f"{description} (計數偏移)"
+                else:
+                    # 偏移動作不是投降（如要牌），設定標記跳過基本策略的投降檢查
+                    return ("SKIP_SURRENDER", deviation["deviation_action"])
+
+        return None
+
+    def _check_other_deviations(
         self,
         hand_value: int,
         dealer_card: str,
@@ -142,19 +186,9 @@ class BasicStrategy:
         num_cards: int,
         player_cards: List[str],
     ) -> Optional[Tuple[str, str]]:
-        """檢查是否有適用的偏移策略"""
+        """檢查硬牌、軟牌和分牌偏移"""
         if true_count is None:
             return None
-
-        # 先檢查投降偏移（優先級最高）
-        surrender_key = f"{hand_value}-{dealer_card}"
-        if surrender_key in self.surrender_deviations:
-            deviation = self.surrender_deviations[surrender_key]
-            threshold = deviation["true_count_threshold"]
-            if deviation["deviation_action"] == "R" and true_count >= threshold:
-                action_info = self.action_codes.get("R", {})
-                description = deviation.get("description", action_info.get("description", ""))
-                return action_info.get("action", "投降"), f"{description} (計數偏移)"
 
         # 檢查對子偏移
         if is_pair:
@@ -167,11 +201,20 @@ class BasicStrategy:
                 basic_action = deviation["basic_action"]
                 deviation_action = deviation["deviation_action"]
 
-                if deviation_action == "Y" and true_count >= threshold:
+                comparison_op = deviation.get("comparison_operator", ">=")
+
+                # 根據比較運算子判斷是否應用偏移
+                apply_deviation = False
+                if comparison_op == ">=":
+                    apply_deviation = true_count >= threshold
+                elif comparison_op == "<=":
+                    apply_deviation = true_count <= threshold
+
+                if deviation_action == "Y" and apply_deviation:
                     action_info = self.action_codes.get("Y", {})
                     description = deviation.get("description", action_info.get("description", ""))
                     return action_info.get("action", "分牌"), f"{description} (計數偏移)"
-                elif deviation_action == "N" and true_count < threshold:
+                elif deviation_action == "N" and not apply_deviation:
                     # 不分牌，繼續檢查其他選項
                     pass
 
@@ -185,8 +228,16 @@ class BasicStrategy:
                 basic_action = deviation["basic_action"]
                 deviation_action = deviation["deviation_action"]
 
-                # 軟牌偏移通常是從保守到積極（需要計數 >= 門檻）
-                if true_count >= threshold:
+                comparison_op = deviation.get("comparison_operator", ">=")
+
+                # 根據比較運算子判斷是否應用偏移
+                apply_deviation = False
+                if comparison_op == ">=":
+                    apply_deviation = true_count >= threshold
+                elif comparison_op == "<=":
+                    apply_deviation = true_count <= threshold
+
+                if apply_deviation:
                     # 處理 Ds 偏移（加倍否則停牌）
                     if deviation_action == "Ds":
                         if num_cards > 2:
@@ -216,14 +267,26 @@ class BasicStrategy:
             basic_action = deviation["basic_action"]
             deviation_action = deviation["deviation_action"]
 
-            # 根據偏移類型判斷
-            apply_deviation = False
-            if basic_action in ["H"] and deviation_action in ["S", "D", "R"]:
-                # 基本策略要牌，偏移為停牌/加倍/投降，需要計數 >= 門檻
-                apply_deviation = true_count >= threshold
-            elif basic_action in ["S"] and deviation_action in ["H", "D"]:
-                # 基本策略停牌，偏移為要牌/加倍，需要計數 <= 門檻
-                apply_deviation = true_count <= threshold
+            comparison_op = deviation.get("comparison_operator")
+
+            # 如果沒有指定比較運算子，使用舊的邏輯作為向後相容
+            if comparison_op is None:
+                if basic_action in ["H"] and deviation_action in ["S", "D", "R"]:
+                    # 基本策略要牌，偏移為停牌/加倍/投降，需要計數 >= 門檻
+                    apply_deviation = true_count >= threshold
+                elif basic_action in ["S"] and deviation_action in ["H", "D"]:
+                    # 基本策略停牌，偏移為要牌/加倍，需要計數 <= 門檻
+                    apply_deviation = true_count <= threshold
+                else:
+                    apply_deviation = False
+            else:
+                # 使用 YAML 中指定的比較運算子
+                if comparison_op == ">=":
+                    apply_deviation = true_count >= threshold
+                elif comparison_op == "<=":
+                    apply_deviation = true_count <= threshold
+                else:
+                    apply_deviation = False
 
             if apply_deviation:
                 # 如果偏移動作是加倍但牌數超過2張，改為要牌
@@ -240,6 +303,10 @@ class BasicStrategy:
     def should_take_insurance(self, true_count: float) -> bool:
         """根據真實計數判斷是否應該買保險"""
         return bool(true_count >= self.insurance_threshold)
+
+    def set_allow_surrender(self, allow: bool) -> None:
+        """設定是否允許投降"""
+        self.allow_surrender = allow
 
     def get_decision(
         self, player_cards: List[str], dealer_card: str, true_count: Optional[float] = None
@@ -262,14 +329,44 @@ class BasicStrategy:
         # 檢查是否為對子
         is_pair = len(player_cards) == 2 and player_cards[0] == player_cards[1]
 
-        # 先檢查偏移策略
-        deviation_result = self._check_deviation(
+        # 1. 先檢查投降偏移（優先級最高）
+        surrender_deviation_result = self._check_surrender_deviation(
+            hand_value, dealer_card, true_count
+        )
+
+        # 處理投降偏移結果
+        skip_surrender = False
+        if surrender_deviation_result:
+            if (
+                isinstance(surrender_deviation_result, tuple)
+                and surrender_deviation_result[0] == "SKIP_SURRENDER"
+            ):
+                # 投降偏移指示不投降，跳過基本策略的投降檢查
+                skip_surrender = True
+            else:
+                # 返回投降偏移結果
+                return surrender_deviation_result
+
+        # 2. 檢查基本策略的投降（只在沒有投降偏移覆蓋時）
+        if not skip_surrender and self.allow_surrender and len(player_cards) == 2 and not is_soft:
+            # 對子8,8不應該投降，應該分牌
+            if not (is_pair and player_cards[0] == "8"):
+                if hand_value in self.surrender_strategy:
+                    surrender_decision = self.surrender_strategy[hand_value][dealer_index]
+                    if surrender_decision == "Y":
+                        action_info = self.action_codes.get("R", {})
+                        return action_info.get("action", "投降"), action_info.get(
+                            "description", "如允許則投降，否則要牌"
+                        )
+
+        # 3. 檢查其他偏移（硬牌、軟牌、分牌）
+        other_deviation_result = self._check_other_deviations(
             hand_value, dealer_card, is_pair, true_count, len(player_cards), player_cards
         )
-        if deviation_result:
-            return deviation_result
+        if other_deviation_result:
+            return other_deviation_result
 
-        # 使用基本策略
+        # 4. 使用基本策略
         if is_pair:
             pair_key = f"{player_cards[0]},{player_cards[1]}"
             if pair_key in self.pair_strategy:

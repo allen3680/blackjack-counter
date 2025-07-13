@@ -17,6 +17,7 @@ deviations:
       basic_action: "H"  # Hit
       deviation_action: "S"  # Stand
       true_count_threshold: 0.0
+      comparison_operator: ">="
       description: "16點對莊家10，計數 >= 0 時停牌"
       
     # 16 vs 9 - 基本策略要牌，計數 >= 4 時停牌
@@ -24,6 +25,7 @@ deviations:
       basic_action: "H"
       deviation_action: "S"
       true_count_threshold: 4.0
+      comparison_operator: ">="
       description: "16點對莊家9，計數 >= 4 時停牌"
       
     # 15 vs 10 - 基本策略要牌，計數 >= 4 時停牌
@@ -31,6 +33,7 @@ deviations:
       basic_action: "H"
       deviation_action: "S"
       true_count_threshold: 4.0
+      comparison_operator: ">="
       description: "15點對莊家10，計數 >= 4 時停牌"
       
     # 13 vs 2 - 基本策略停牌，計數 <= -1 時要牌
@@ -38,6 +41,7 @@ deviations:
       basic_action: "S"
       deviation_action: "H"
       true_count_threshold: -1.0
+      comparison_operator: "<="
       description: "13點對莊家2，計數 <= -1 時要牌"
       
     # 12 vs 2 - 基本策略要牌，計數 >= 3 時停牌
@@ -45,6 +49,7 @@ deviations:
       basic_action: "H"
       deviation_action: "S"
       true_count_threshold: 3.0
+      comparison_operator: ">="
       description: "12點對莊家2，計數 >= 3 時停牌"
       
     # 12 vs 3 - 基本策略要牌，計數 >= 2 時停牌
@@ -52,6 +57,7 @@ deviations:
       basic_action: "H"
       deviation_action: "S"
       true_count_threshold: 2.0
+      comparison_operator: ">="
       description: "12點對莊家3，計數 >= 2 時停牌"
       
     # 12 vs 4 - 基本策略停牌，計數 <= 0 時要牌
@@ -59,6 +65,7 @@ deviations:
       basic_action: "S"
       deviation_action: "H"
       true_count_threshold: 0.0
+      comparison_operator: "<="
       description: "12點對莊家4，計數 <= 0 時要牌"
       
     # 11 vs A - 基本策略要牌，計數 >= 1 時加倍
@@ -66,6 +73,7 @@ deviations:
       basic_action: "H"
       deviation_action: "D"
       true_count_threshold: 1.0
+      comparison_operator: ">="
       description: "11點對莊家A，計數 >= 1 時加倍"
       
     # 10 vs 10 - 基本策略要牌，計數 >= 4 時加倍
@@ -73,6 +81,7 @@ deviations:
       basic_action: "H"
       deviation_action: "D"
       true_count_threshold: 4.0
+      comparison_operator: ">="
       description: "10點對莊家10，計數 >= 4 時加倍"
       
     # 10 vs A - 基本策略要牌，計數 >= 4 時加倍
@@ -80,6 +89,7 @@ deviations:
       basic_action: "H"
       deviation_action: "D"
       true_count_threshold: 4.0
+      comparison_operator: ">="
       description: "10點對莊家A，計數 >= 4 時加倍"
       
     # 9 vs 2 - 基本策略要牌，計數 >= 1 時加倍
@@ -87,6 +97,7 @@ deviations:
       basic_action: "H"
       deviation_action: "D"
       true_count_threshold: 1.0
+      comparison_operator: ">="
       description: "9點對莊家2，計數 >= 1 時加倍"
       
     # 9 vs 7 - 基本策略要牌，計數 >= 3 時加倍
@@ -94,6 +105,7 @@ deviations:
       basic_action: "H"
       deviation_action: "D"
       true_count_threshold: 3.0
+      comparison_operator: ">="
       description: "9點對莊家7，計數 >= 3 時加倍"
 
     # 8 vs 6 - 基本策略要牌，計數 >= 2 時加倍
@@ -101,6 +113,7 @@ deviations:
       basic_action: "H"
       deviation_action: "D"
       true_count_threshold: 2.0
+      comparison_operator: ">="
       description: "8點對莊家6，計數 >= 2 時加倍"
 
   # 對子偏移 (Pair Splits)
@@ -110,6 +123,7 @@ deviations:
       basic_action: "N"  # No split (Stand)
       deviation_action: "Y"  # Split
       true_count_threshold: 6.0
+      comparison_operator: ">="
       description: "一對10對莊家4，計數 >= 6 時分牌"
 
     # 10,10 vs 5 - 基本策略不分牌，計數 >= 5 時分牌
@@ -117,6 +131,7 @@ deviations:
       basic_action: "N"  # No split (Stand)
       deviation_action: "Y"  # Split
       true_count_threshold: 5.0
+      comparison_operator: ">="
       description: "一對10對莊家5，計數 >= 5 時分牌"
       
     # 10,10 vs 6 - 基本策略不分牌，計數 >= 4 時分牌
@@ -124,6 +139,7 @@ deviations:
       basic_action: "N"
       deviation_action: "Y"
       true_count_threshold: 4.0
+      comparison_operator: ">="
       description: "一對10對莊家6，計數 >= 4 時分牌"
   
   # 軟牌偏移 (Soft Hands)
@@ -133,6 +149,7 @@ deviations:
       basic_action: "S"
       deviation_action: "Ds"
       true_count_threshold: 3.0
+      comparison_operator: ">="
       description: "軟19點對莊家4，計數 >= 3 時加倍"
       
     # A,8 vs 5 - 基本策略停牌，計數 >= 1 時加倍
@@ -140,6 +157,7 @@ deviations:
       basic_action: "S"
       deviation_action: "Ds"
       true_count_threshold: 1.0
+      comparison_operator: ">="
       description: "軟19點對莊家5，計數 >= 1 時加倍"
       
     # A,8 vs 6 - 基本策略停牌，計數 >= 1 時加倍
@@ -147,6 +165,7 @@ deviations:
       basic_action: "S"
       deviation_action: "Ds"
       true_count_threshold: 1.0
+      comparison_operator: ">="
       description: "軟19點對莊家6，計數 >= 1 時加倍"
       
     # A,6 vs 2 - 基本策略要牌，計數 >= 1 時加倍
@@ -154,37 +173,51 @@ deviations:
       basic_action: "H"
       deviation_action: "D"
       true_count_threshold: 1.0
+      comparison_operator: ">="
       description: "軟17點對莊家2，計數 >= 1 時加倍"
       
   # Fab 4 - 投降偏移 (Surrender Deviations)
-  surrender:
-    # 14 vs 10 - 計數 >= 3 時投降
-    "14-10":
-      basic_action: "H"
-      deviation_action: "R"  # Surrender
-      true_count_threshold: 3.0
-      description: "14點對莊家10，計數 >= 3 時投降"
-      
-    # 15 vs 10 - 計數 >= 0 時投降
-    "15-10":
-      basic_action: "H"
-      deviation_action: "R"
-      true_count_threshold: 0.0
-      description: "15點對莊家10，計數 >= 0 時投降"
-      
-    # 15 vs A - 計數 >= 2 時投降
-    "15-A":
-      basic_action: "H"
-      deviation_action: "R"
-      true_count_threshold: 2.0
-      description: "15點對莊家A，計數 >= 2 時投降"
-      
-    # 15 vs 9 - 計數 >= 2 時投降
+  # 這些偏移只在允許投降時生效
+  surrender:      
+    # 15 vs 9 - 基本策略不投降，計數 >= 2 時投降
     "15-9":
       basic_action: "H"
       deviation_action: "R"
       true_count_threshold: 2.0
+      comparison_operator: ">="
       description: "15點對莊家9，計數 >= 2 時投降"
+
+    # 15 vs 10 - 基本策略投降，計數 <= 0 時不投降
+    "15-10":
+      basic_action: "R"
+      deviation_action: "H"
+      true_count_threshold: 0.0
+      comparison_operator: "<="
+      description: "15點對莊家10，計數 <= 0 時不投降"
+      
+    # 15 vs A - 基本策略不投降，計數 >= 2 時投降
+    "15-A":
+      basic_action: "H"
+      deviation_action: "R"
+      true_count_threshold: 2.0
+      comparison_operator: ">="
+      description: "15點對莊家A，計數 >= 2 時投降"
+    
+    # 16 vs 8 - 基本策略不投降，計數 >= 4 時投降
+    "16-8":
+      basic_action: "H"
+      deviation_action: "R"
+      true_count_threshold: 4.0
+      comparison_operator: ">="
+      description: "16點對莊家8，計數 >= 4 時投降"
+
+    # 16 vs 9 - 基本策略投降，計數 <= -1 時不投降
+    "16-9":
+      basic_action: "R"
+      deviation_action: "H"
+      true_count_threshold: -1.0
+      comparison_operator: "<="
+      description: "16點對莊家9，計數 <= -1 時不投降"
 
 # 偏移優先順序說明
 priority_notes:
