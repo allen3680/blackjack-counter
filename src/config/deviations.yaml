@@ -125,6 +125,36 @@ deviations:
       deviation_action: "Y"
       true_count_threshold: 4.0
       description: "一對10對莊家6，計數 >= 4 時分牌"
+  
+  # 軟牌偏移 (Soft Hands)
+  soft_hands:
+    # A,8 vs 4 - 基本策略停牌，計數 >= 3 時加倍
+    "19-4":
+      basic_action: "S"
+      deviation_action: "Ds"
+      true_count_threshold: 3.0
+      description: "軟19點對莊家4，計數 >= 3 時加倍"
+      
+    # A,8 vs 5 - 基本策略停牌，計數 >= 1 時加倍
+    "19-5":
+      basic_action: "S"
+      deviation_action: "Ds"
+      true_count_threshold: 1.0
+      description: "軟19點對莊家5，計數 >= 1 時加倍"
+      
+    # A,8 vs 6 - 基本策略停牌，計數 >= 1 時加倍
+    "19-6":
+      basic_action: "S"
+      deviation_action: "Ds"
+      true_count_threshold: 1.0
+      description: "軟19點對莊家6，計數 >= 1 時加倍"
+      
+    # A,6 vs 2 - 基本策略要牌，計數 >= 1 時加倍
+    "17-2":
+      basic_action: "H"
+      deviation_action: "D"
+      true_count_threshold: 1.0
+      description: "軟17點對莊家2，計數 >= 1 時加倍"
       
   # Fab 4 - 投降偏移 (Surrender Deviations)
   surrender:

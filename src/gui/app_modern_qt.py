@@ -634,7 +634,7 @@ class ModernBlackjackCounterApp(QMainWindow):
         """
         )
         decision_layout.addWidget(self.decision_label)
-        
+
         # 保險建議標籤
         self.insurance_label = QLabel("")
         self.insurance_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -1053,7 +1053,9 @@ class ModernBlackjackCounterApp(QMainWindow):
             # 如果是活動手牌，顯示決策
             if hand.status == HandStatus.ACTIVE and self.game_state.dealer_card:
                 true_count = self.counter.get_true_count()
-                action, _ = self.strategy.get_decision(hand.cards, self.game_state.dealer_card, true_count)
+                action, _ = self.strategy.get_decision(
+                    hand.cards, self.game_state.dealer_card, true_count
+                )
                 action_label = QLabel(f"建議: {action}")
                 action_label.setStyleSheet(
                     f"color: {self.get_action_color(action)}; font-size: 12px; font-weight: bold;"
@@ -1093,7 +1095,7 @@ class ModernBlackjackCounterApp(QMainWindow):
                 }}
             """
             )
-            
+
             # 檢查是否需要顯示保險建議（只在莊家第一張牌是A且只有一張牌時）
             if self.game_state.dealer_card == "A" and len(self.game_state.dealer_cards) == 1:
                 should_insure = self.strategy.should_take_insurance(true_count)

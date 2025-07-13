@@ -8,12 +8,15 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import yaml
 
-from src.config import STRATEGY_CONFIG, DEVIATIONS_CONFIG
+from src.config import DEVIATIONS_CONFIG, STRATEGY_CONFIG
 
 
 class BasicStrategy:
-    def __init__(self, strategy_file: Optional[Union[str, Path]] = None, 
-                 deviations_file: Optional[Union[str, Path]] = None) -> None:
+    def __init__(
+        self,
+        strategy_file: Optional[Union[str, Path]] = None,
+        deviations_file: Optional[Union[str, Path]] = None,
+    ) -> None:
         """初始化策略引擎，從YAML檔案載入策略"""
         # 使用預設路徑或自定義路徑
         if strategy_file is None:
@@ -50,13 +53,16 @@ class BasicStrategy:
             deviations_path = DEVIATIONS_CONFIG
         else:
             deviations_path = Path(deviations_file)
-            
+
         try:
             with open(deviations_path, "r", encoding="utf-8") as f:
                 deviations_config = yaml.safe_load(f)
             self.deviations = deviations_config.get("deviations", {})
-            self.insurance_threshold = self.deviations.get("insurance", {}).get("true_count_threshold", 3.0)
+            self.insurance_threshold = self.deviations.get("insurance", {}).get(
+                "true_count_threshold", 3.0
+            )
             self.hard_deviations = self.deviations.get("hard_hands", {})
+            self.soft_deviations = self.deviations.get("soft_hands", {})
             self.pair_deviations = self.deviations.get("pairs", {})
             self.surrender_deviations = self.deviations.get("surrender", {})
         except FileNotFoundError:
@@ -64,6 +70,7 @@ class BasicStrategy:
             self.deviations = {}
             self.insurance_threshold = 3.0
             self.hard_deviations = {}
+            self.soft_deviations = {}
             self.pair_deviations = {}
             self.surrender_deviations = {}
         except yaml.YAMLError:
@@ -71,6 +78,7 @@ class BasicStrategy:
             self.deviations = {}
             self.insurance_threshold = 3.0
             self.hard_deviations = {}
+            self.soft_deviations = {}
             self.pair_deviations = {}
             self.surrender_deviations = {}
 
@@ -125,23 +133,29 @@ class BasicStrategy:
 
         return value, aces > 0 and value <= 21
 
-    def _check_deviation(self, hand_value: int, dealer_card: str, is_pair: bool, 
-                        true_count: Optional[float], num_cards: int) -> Optional[Tuple[str, str]]:
+    def _check_deviation(
+        self,
+        hand_value: int,
+        dealer_card: str,
+        is_pair: bool,
+        true_count: Optional[float],
+        num_cards: int,
+        player_cards: List[str],
+    ) -> Optional[Tuple[str, str]]:
         """檢查是否有適用的偏移策略"""
         if true_count is None:
             return None
-            
+
         # 先檢查投降偏移（優先級最高）
         surrender_key = f"{hand_value}-{dealer_card}"
         if surrender_key in self.surrender_deviations:
             deviation = self.surrender_deviations[surrender_key]
             threshold = deviation["true_count_threshold"]
-            if (deviation["deviation_action"] == "R" and true_count >= threshold):
+            if deviation["deviation_action"] == "R" and true_count >= threshold:
                 action_info = self.action_codes.get("R", {})
                 description = deviation.get("description", action_info.get("description", ""))
                 return action_info.get("action", "投降"), f"{description} (計數偏移)"
-                
-            
+
         # 檢查對子偏移
         if is_pair:
             # 對於對子，使用特殊格式 如 "10,10-5"
@@ -152,7 +166,7 @@ class BasicStrategy:
                 threshold = deviation["true_count_threshold"]
                 basic_action = deviation["basic_action"]
                 deviation_action = deviation["deviation_action"]
-                
+
                 if deviation_action == "Y" and true_count >= threshold:
                     action_info = self.action_codes.get("Y", {})
                     description = deviation.get("description", action_info.get("description", ""))
@@ -160,7 +174,40 @@ class BasicStrategy:
                 elif deviation_action == "N" and true_count < threshold:
                     # 不分牌，繼續檢查其他選項
                     pass
-                    
+
+        # 檢查軟牌偏移（如果是軟牌）
+        hand_value_calc, is_soft_calc = self.calculate_hand_value(player_cards)
+        if is_soft_calc:
+            soft_key = f"{hand_value}-{dealer_card}"
+            if soft_key in self.soft_deviations:
+                deviation = self.soft_deviations[soft_key]
+                threshold = deviation["true_count_threshold"]
+                basic_action = deviation["basic_action"]
+                deviation_action = deviation["deviation_action"]
+
+                # 軟牌偏移通常是從保守到積極（需要計數 >= 門檻）
+                if true_count >= threshold:
+                    # 處理 Ds 偏移（加倍否則停牌）
+                    if deviation_action == "Ds":
+                        if num_cards > 2:
+                            action_info = self.action_codes.get("S", {})
+                            return (
+                                action_info.get("action", "停牌"),
+                                "無法加倍，選擇停牌 (計數偏移)",
+                            )
+                        else:
+                            action_info = self.action_codes.get("D", {})
+                            description = deviation.get(
+                                "description", action_info.get("description", "")
+                            )
+                            return action_info.get("action", "加倍"), f"{description} (計數偏移)"
+                    else:
+                        action_info = self.action_codes.get(deviation_action, {})
+                        description = deviation.get(
+                            "description", action_info.get("description", "")
+                        )
+                        return action_info.get("action", ""), f"{description} (計數偏移)"
+
         # 檢查硬牌偏移
         hard_key = f"{hand_value}-{dealer_card}"
         if hard_key in self.hard_deviations:
@@ -168,7 +215,7 @@ class BasicStrategy:
             threshold = deviation["true_count_threshold"]
             basic_action = deviation["basic_action"]
             deviation_action = deviation["deviation_action"]
-            
+
             # 根據偏移類型判斷
             apply_deviation = False
             if basic_action in ["H"] and deviation_action in ["S", "D", "R"]:
@@ -177,7 +224,7 @@ class BasicStrategy:
             elif basic_action in ["S"] and deviation_action in ["H", "D"]:
                 # 基本策略停牌，偏移為要牌/加倍，需要計數 <= 門檻
                 apply_deviation = true_count <= threshold
-                
+
             if apply_deviation:
                 # 如果偏移動作是加倍但牌數超過2張，改為要牌
                 if deviation_action == "D" and num_cards > 2:
@@ -187,15 +234,16 @@ class BasicStrategy:
                     action_info = self.action_codes.get(deviation_action, {})
                     description = deviation.get("description", action_info.get("description", ""))
                     return action_info.get("action", ""), f"{description} (計數偏移)"
-                    
+
         return None
 
     def should_take_insurance(self, true_count: float) -> bool:
         """根據真實計數判斷是否應該買保險"""
-        return true_count >= self.insurance_threshold
+        return bool(true_count >= self.insurance_threshold)
 
-    def get_decision(self, player_cards: List[str], dealer_card: str, 
-                    true_count: Optional[float] = None) -> Tuple[str, str]:
+    def get_decision(
+        self, player_cards: List[str], dealer_card: str, true_count: Optional[float] = None
+    ) -> Tuple[str, str]:
         """取得策略決策（含偏移）"""
         if len(player_cards) == 0:
             return "無手牌", "請加入玩家手牌"
@@ -207,19 +255,20 @@ class BasicStrategy:
 
         # 計算手牌點數
         hand_value, is_soft = self.calculate_hand_value(player_cards)
-        
+
         if hand_value > 21:
             return "爆牌", f"手牌點數：{hand_value}"
-            
+
         # 檢查是否為對子
         is_pair = len(player_cards) == 2 and player_cards[0] == player_cards[1]
-        
+
         # 先檢查偏移策略
-        deviation_result = self._check_deviation(hand_value, dealer_card, is_pair, 
-                                               true_count, len(player_cards))
+        deviation_result = self._check_deviation(
+            hand_value, dealer_card, is_pair, true_count, len(player_cards), player_cards
+        )
         if deviation_result:
             return deviation_result
-            
+
         # 使用基本策略
         if is_pair:
             pair_key = f"{player_cards[0]},{player_cards[1]}"
@@ -246,13 +295,13 @@ class BasicStrategy:
             action_info = self.action_codes[decision]
             action = action_info.get("action", "")
             explanation = action_info.get("description", "")
-            
+
             # 處理 Ds (Double if allowed, otherwise stand)
             if decision == "Ds":
                 # 這裡假設如果手牌超過2張就不能加倍
                 if len(player_cards) > 2:
                     return "停牌", "無法加倍，選擇停牌"
-            
+
             if action:
                 return action, explanation
 
