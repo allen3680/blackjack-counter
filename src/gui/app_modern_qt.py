@@ -1365,7 +1365,7 @@ class ModernBlackjackCounterApp(QMainWindow):
         allow_surrender = state == 2
         self.strategy.set_allow_surrender(allow_surrender)
         # 更新顯示以反映新的策略
-        self.update_decision_display()
+        self.update_display()
 
     def switch_to_next_panel(self) -> None:
         """切換到下一個面板"""
