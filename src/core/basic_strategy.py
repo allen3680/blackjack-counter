@@ -259,44 +259,47 @@ class BasicStrategy:
                         )
                         return action_info.get("action", ""), f"{description} (計數偏移)"
 
-        # 檢查硬牌偏移
-        hard_key = f"{hand_value}-{dealer_card}"
-        if hard_key in self.hard_deviations:
-            deviation = self.hard_deviations[hard_key]
-            threshold = deviation["true_count_threshold"]
-            basic_action = deviation["basic_action"]
-            deviation_action = deviation["deviation_action"]
+        # 檢查硬牌偏移（只有非軟牌才應用硬牌偏移）
+        if not is_soft_calc:
+            hard_key = f"{hand_value}-{dealer_card}"
+            if hard_key in self.hard_deviations:
+                deviation = self.hard_deviations[hard_key]
+                threshold = deviation["true_count_threshold"]
+                basic_action = deviation["basic_action"]
+                deviation_action = deviation["deviation_action"]
 
-            comparison_op = deviation.get("comparison_operator")
+                comparison_op = deviation.get("comparison_operator")
 
-            # 如果沒有指定比較運算子，使用舊的邏輯作為向後相容
-            if comparison_op is None:
-                if basic_action in ["H"] and deviation_action in ["S", "D", "R"]:
-                    # 基本策略要牌，偏移為停牌/加倍/投降，需要計數 >= 門檻
-                    apply_deviation = true_count >= threshold
-                elif basic_action in ["S"] and deviation_action in ["H", "D"]:
-                    # 基本策略停牌，偏移為要牌/加倍，需要計數 <= 門檻
-                    apply_deviation = true_count <= threshold
+                # 如果沒有指定比較運算子，使用舊的邏輯作為向後相容
+                if comparison_op is None:
+                    if basic_action in ["H"] and deviation_action in ["S", "D", "R"]:
+                        # 基本策略要牌，偏移為停牌/加倍/投降，需要計數 >= 門檻
+                        apply_deviation = true_count >= threshold
+                    elif basic_action in ["S"] and deviation_action in ["H", "D"]:
+                        # 基本策略停牌，偏移為要牌/加倍，需要計數 <= 門檻
+                        apply_deviation = true_count <= threshold
+                    else:
+                        apply_deviation = False
                 else:
-                    apply_deviation = False
-            else:
-                # 使用 YAML 中指定的比較運算子
-                if comparison_op == ">=":
-                    apply_deviation = true_count >= threshold
-                elif comparison_op == "<=":
-                    apply_deviation = true_count <= threshold
-                else:
-                    apply_deviation = False
+                    # 使用 YAML 中指定的比較運算子
+                    if comparison_op == ">=":
+                        apply_deviation = true_count >= threshold
+                    elif comparison_op == "<=":
+                        apply_deviation = true_count <= threshold
+                    else:
+                        apply_deviation = False
 
-            if apply_deviation:
-                # 如果偏移動作是加倍但牌數超過2張，改為要牌
-                if deviation_action == "D" and num_cards > 2:
-                    action_info = self.action_codes.get("H", {})
-                    return action_info.get("action", "要牌"), "無法加倍，改為要牌 (計數偏移)"
-                else:
-                    action_info = self.action_codes.get(deviation_action, {})
-                    description = deviation.get("description", action_info.get("description", ""))
-                    return action_info.get("action", ""), f"{description} (計數偏移)"
+                if apply_deviation:
+                    # 如果偏移動作是加倍但牌數超過2張，改為要牌
+                    if deviation_action == "D" and num_cards > 2:
+                        action_info = self.action_codes.get("H", {})
+                        return action_info.get("action", "要牌"), "無法加倍，改為要牌 (計數偏移)"
+                    else:
+                        action_info = self.action_codes.get(deviation_action, {})
+                        description = deviation.get(
+                            "description", action_info.get("description", "")
+                        )
+                        return action_info.get("action", ""), f"{description} (計數偏移)"
 
         return None
 
