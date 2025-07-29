@@ -20,6 +20,7 @@ a = Analysis(
         ('src/config/strategy.yaml', 'src/config'),
         ('src/config/wong_halves.yaml', 'src/config'),
         ('src/config/shortcuts.yaml', 'src/config'),
+        ('src/config/deviations.yaml', 'src/config'),
     ],
     hiddenimports=[
         'PyQt6',
