@@ -1237,8 +1237,8 @@ class ModernBlackjackCounterApp(QMainWindow):
     def get_action_color(self, action: str) -> str:
         """取得動作對應的顏色"""
         color_map = {
-            "要牌": "#3498db",  # 藍
-            "停牌": "#27ae60",  # 綠
+            "要牌": "#27ae60",  # 綠
+            "停牌": "#e74c3c",  # 紅
             "加倍": "#f39c12",  # 橙
             "分牌": "#9b59b6",  # 紫
             "投降": "#e74c3c",  # 紅
