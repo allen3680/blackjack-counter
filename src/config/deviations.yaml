@@ -112,9 +112,9 @@ deviations:
     "8-6":
       basic_action: "H"
       deviation_action: "D"
-      true_count_threshold: 2.0
+      true_count_threshold: 2.5
       comparison_operator: ">="
-      description: "8點對莊家6，計數 >= 2 時加倍"
+      description: "8點對莊家6，計數 >= 2.5 時加倍"
 
   # 對子偏移 (Pair Splits)
   pairs:
