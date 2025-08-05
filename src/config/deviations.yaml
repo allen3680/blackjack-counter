@@ -11,15 +11,7 @@ deviations:
     true_count_threshold: 3.0
     
   # 硬牌偏移 (Hard Hands)
-  hard_hands:
-    # 16 vs 10 - 基本策略要牌，計數 >= 0 時停牌
-    "16-10":
-      basic_action: "H"  # Hit
-      deviation_action: "S"  # Stand
-      true_count_threshold: 0.0
-      comparison_operator: ">="
-      description: "16點對莊家10，計數 >= 0 時停牌"
-      
+  hard_hands:      
     # 16 vs 9 - 基本策略要牌，計數 >= 4 時停牌
     "16-9":
       basic_action: "H"
